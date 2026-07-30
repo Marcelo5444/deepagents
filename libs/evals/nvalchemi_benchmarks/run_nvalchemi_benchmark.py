@@ -6,10 +6,10 @@ Usage:
     export NVIDIA_API_KEY=***
     export LANGSMITH_API_KEY=***
     export LANGSMITH_TRACING=true
-    
+
     # Run all tasks with Nemotron 3 Super (base model)
     python run_nvalchemi_benchmark.py --model nvidia/nvidia/nemotron-3-super-v3 --arm with
-    
+
     # Run single task
     python run_nvalchemi_benchmark.py --model nvidia/nvidia/nemotron-3-super-v3 --task st-1-write-read-roundtrip --arm with
 """
@@ -42,26 +42,26 @@ def run_single_task(
     timeout: int = 600,
 ) -> dict[str, Any]:
     """Run a single benchmark task with the given model."""
-    
+
     # Find task
     task = None
     for t in NVALCHEMI_TASKS:
         if t.id == task_id:
             task = t
             break
-    
+
     if not task:
         return {"task_id": task_id, "passed": False, "detail": f"Unknown task: {task_id}"}
-    
+
     workdir = Path(config.evals_path) / "work" / task_id / arm
     workdir.mkdir(parents=True, exist_ok=True)
-    
+
     solution_py = workdir / "solution.py"
     result_json = workdir / "result.json"
-    
+
     # Escape prompt for f-string
     prompt_escaped = task.prompt.replace('"', '\\"').replace('\n', '\\n')
-    
+
     # Use direct requests to NVIDIA API (bypassing langchain auth issues)
     runner_script = f'''import os
 import sys
@@ -71,7 +71,7 @@ sys.path.insert(0, "{config.repo_path}")
 
 def call_nvidia_model(model, prompt, api_key, base_url, temperature=0.3, max_tokens=8192, timeout=180):
     """Call NVIDIA API directly using requests (bypassing langchain)."""
-    url = f"{{base_url}}/chat/completions"
+    url = base_url + "/chat/completions"
     headers = {{
         "Authorization": f"Bearer {{api_key}}",
         "Content-Type": "application/json"
@@ -109,29 +109,29 @@ with open("{solution_py}", "w") as f:
     f.write(solution)
 
 print("SOLUTION_WRITTEN")'''
-    
+
     # Write and run the generator
     gen_script = workdir / "generate_solution.py"
     gen_script.write_text(runner_script)
-    
+
     env = os.environ.copy()
-    # Use uv's python environment - use the actual python executable from config
-    uv_python = config.python_executable
+    # Use uv run python for proper environment
+    uv_python_cmd = ["uv", "run", "python"]
     env["PYTHONPATH"] = f"{config.repo_path}:{env.get('PYTHONPATH', '')}"
     env["VIRTUAL_ENV"] = f"{config.repo_path}/.venv"
     env["PATH"] = f"{config.repo_path}/.venv/bin:{env.get('PATH', '')}"
-    
+
     try:
         # Generate solution
         result = subprocess.run(
-            [uv_python, str(gen_script)],
+            uv_python_cmd + [str(gen_script)],
             cwd=workdir,
             capture_output=True,
             text=True,
             timeout=120,
             env=env,
         )
-        
+
         if result.returncode != 0:
             return {
                 "task_id": task_id,
@@ -139,7 +139,7 @@ print("SOLUTION_WRITTEN")'''
                 "passed": False,
                 "detail": f"Generation failed: {result.stderr[:500]}",
             }
-        
+
         if not solution_py.exists():
             return {
                 "task_id": task_id,
@@ -147,26 +147,26 @@ print("SOLUTION_WRITTEN")'''
                 "passed": False,
                 "detail": "solution.py not created",
             }
-        
+
         # Now run the solution
         run_result = subprocess.run(
-            [uv_python, "solution.py"],
+            ["uv", "run", "python", "solution.py"],
             cwd=workdir,
             capture_output=True,
             text=True,
             timeout=timeout,
             env={**env, "TORCHDYNAMO_DISABLE": "1", "CUDA_VISIBLE_DEVICES": ""},
         )
-        
+
         # Verify with runner
         verify_result = subprocess.run(
-            [uv_python, "runner.py", "verify", "--task", task_id, "--workdir", str(workdir), "--arm", arm],
+            ["uv", "run", "python", "runner.py", "verify", "--task", task_id, "--workdir", str(workdir), "--arm", arm],
             cwd=config.evals_path,
             capture_output=True,
             text=True,
             timeout=60,
         )
-        
+
         try:
             verdict = json.loads(verify_result.stdout.strip())
             return {
@@ -184,7 +184,7 @@ print("SOLUTION_WRITTEN")'''
                 "passed": False,
                 "detail": f"Runner output not JSON: {verify_result.stdout[:200]}",
             }
-            
+
     except subprocess.TimeoutExpired:
         return {
             "task_id": task_id,
@@ -209,7 +209,7 @@ def main():
     parser.add_argument("--max-concurrent", type=int, default=2, help="Max concurrent tasks")
     parser.add_argument("--output", help="Output JSON file for results")
     args = parser.parse_args()
-    
+
     # Check API keys
     if not os.getenv("NVIDIA_API_KEY"):
         print("ERROR: NVIDIA_API_KEY not set")
@@ -217,9 +217,9 @@ def main():
     if not os.getenv("LANGSMITH_API_KEY"):
         print("ERROR: LANGSMITH_API_KEY not set")
         sys.exit(1)
-    
+
     config = BenchmarkConfig()
-    
+
     # Filter tasks
     tasks_to_run = NVALCHEMI_TASKS
     if args.task:
@@ -227,38 +227,38 @@ def main():
         if not tasks_to_run:
             print(f"Unknown task: {args.task}")
             sys.exit(1)
-    
+
     arms = ["with", "without"] if args.arm == "both" else [args.arm]
-    
+
     print(f"Running {len(tasks_to_run)} task(s) x {len(arms)} arm(s) = {len(tasks_to_run) * len(arms)} evaluations")
     print(f"Model: {args.model}")
     print(f"Arms: {arms}")
     print()
-    
+
     results = []
-    
+
     for task in tasks_to_run:
         for arm in arms:
             print(f"Running {task.id} [{arm}]...")
             result = run_single_task(task.id, arm, args.model, config)
             results.append(result)
-            
+
             status = "PASS" if result["passed"] else "FAIL"
             print(f"  {status}: {result.get('detail', 'N/A')[:100]}")
-    
+
     # Summary
     passed = sum(1 for r in results if r["passed"])
     total = len(results)
     print(f"\n=== SUMMARY ===")
     print(f"Passed: {passed}/{total}")
     print(f"Pass rate: {passed/total*100:.1f}%")
-    
+
     # Per-arm breakdown
     for arm in arms:
         arm_results = [r for r in results if r["arm"] == arm]
         arm_passed = sum(1 for r in arm_results if r["passed"])
         print(f"  {arm}: {arm_passed}/{len(arm_results)}")
-    
+
     # Save results
     if args.output:
         with open(args.output, "w") as f:
