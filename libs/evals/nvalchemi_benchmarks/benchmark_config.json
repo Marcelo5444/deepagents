@@ -1,0 +1,8 @@
+{
+  "repo_path": "/home/marcelo/aifs_evals",
+  "evals_path": "/home/marcelo/aifs_evals/nvalchemi_benchmarks",
+  "model_with_skill": "nvidia/nemotron-3-super",
+  "model_without_skill": "nvidia/nemotron-3-super",
+  "proposer_model": "nvidia/nemotron-3-ultra",
+  "max_concurrent": 2
+}

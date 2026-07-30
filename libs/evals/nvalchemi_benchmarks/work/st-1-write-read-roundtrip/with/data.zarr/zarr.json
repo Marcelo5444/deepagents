@@ -1,0 +1,18 @@
+{
+  "attributes": {
+    "num_samples": 10,
+    "fields": {
+      "core": {
+        "positions": "atom",
+        "atomic_masses": "atom",
+        "atom_categories": "atom",
+        "energy": "system",
+        "atomic_numbers": "atom",
+        "velocities": "atom"
+      },
+      "custom": {}
+    }
+  },
+  "zarr_format": 3,
+  "node_type": "group"
+}

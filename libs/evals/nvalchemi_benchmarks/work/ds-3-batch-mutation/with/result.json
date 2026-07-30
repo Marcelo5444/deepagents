@@ -1,0 +1,10 @@
+{
+  "roundtrip_sizes": [
+    4,
+    6,
+    3,
+    7
+  ],
+  "sizes_preserved": true,
+  "num_graphs": 4
+}

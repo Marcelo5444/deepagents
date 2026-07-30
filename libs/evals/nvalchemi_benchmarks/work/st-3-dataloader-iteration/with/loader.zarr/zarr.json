@@ -1,0 +1,21 @@
+{
+  "attributes": {
+    "num_samples": 12,
+    "fields": {
+      "core": {
+        "cell": "system",
+        "energy": "system",
+        "pbc": "system",
+        "atom_categories": "atom",
+        "forces": "atom",
+        "velocities": "atom",
+        "positions": "atom",
+        "atomic_numbers": "atom",
+        "atomic_masses": "atom"
+      },
+      "custom": {}
+    }
+  },
+  "zarr_format": 3,
+  "node_type": "group"
+}

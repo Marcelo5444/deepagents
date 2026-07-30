@@ -1,0 +1,253 @@
+{
+  "st-1-write-read-roundtrip": {
+    "id": "st-1-write-read-roundtrip",
+    "skill": "nvalchemi",
+    "prompt": "Using nvalchemi (CPU only), write `solution.py` that:\n1. Creates 10 random AtomicData systems (5-15 atoms each, with energy labels) and writes them to a Zarr store `data.zarr` using nvalchemi's AtomicDataZarrWriter.\n2. Reads them back with AtomicDataZarrReader and reconstructs AtomicData objects (device cpu).\n3. Verifies the count and that the first system's positions round-trip exactly (torch.allclose).\nWrite `result.json` with: num_written (int), num_read (int), positions_roundtrip_ok (bool).\n\nKey imports:\n```python\nfrom nvalchemi.data import AtomicData, AtomicDataZarrWriter, AtomicDataZarrReader\nimport torch\n```",
+    "result_schema": {
+      "num_written": "int",
+      "num_read": "int",
+      "positions_roundtrip_ok": "bool"
+    },
+    "timeout_sec": 480
+  },
+  "st-2-append-delete-defrag": {
+    "id": "st-2-append-delete-defrag",
+    "skill": "nvalchemi",
+    "prompt": "Using nvalchemi (CPU only), write `solution.py` that:\n1. Writes 6 random AtomicData systems to a Zarr store `store.zarr` using AtomicDataZarrWriter.\n2. Appends 2 more systems to the same store.\n3. Soft-deletes samples 0 and 3 (if supported), then defragments the store.\n4. Re-opens the store with a reader and counts active samples.\nWrite `result.json` with: after_append (int), after_defrag (int).\n\nKey imports:\n```python\nfrom nvalchemi.data import AtomicData, AtomicDataZarrWriter, AtomicDataZarrReader\nimport torch\n```",
+    "result_schema": {
+      "after_append": "int",
+      "after_defrag": "int"
+    },
+    "timeout_sec": 480
+  },
+  "st-3-dataloader-iteration": {
+    "id": "st-3-dataloader-iteration",
+    "skill": "nvalchemi",
+    "prompt": "Using nvalchemi (CPU only), write `solution.py` that:\n1. Writes 12 random AtomicData systems (with energy labels) to `loader.zarr`.\n2. Builds a DataLoader over the store using nvalchemi's Dataset/DataLoader (device cpu, batch_size=4, no shuffling).\n3. Iterates all batches, counting batches and total graphs, and checks each yielded batch exposes num_graphs and positions.\nWrite `result.json` with: num_batches (int), total_graphs (int).\n\nKey imports:\n```python\nfrom nvalchemi.data import AtomicData, AtomicDataZarrWriter, AtomicDataZarrReader, Dataset, DataLoader\nimport torch\n```",
+    "result_schema": {
+      "num_batches": "int",
+      "total_graphs": "int"
+    },
+    "timeout_sec": 480
+  },
+  "ds-1-build-and-batch": {
+    "id": "ds-1-build-and-batch",
+    "skill": "nvalchemi",
+    "prompt": "Using nvalchemi (CPU only), write `solution.py` that:\n1. Builds three atomic systems as AtomicData objects with random positions, sizes 5, 8, and 13 atoms, all carbon (atomic number 6), each with a 10x10x10 Angstrom cubic cell and a per-system energy label.\n2. Combines them into a single Batch using Batch.from_data_list().\n3. Accesses per-atom positions and per-graph energies from the batch.\nWrite `result.json` containing: num_graphs (int), num_nodes (int), positions_shape (list), energy_shape (list), atoms_per_graph (list of 3 ints, in order).\n\nKey imports:\n```python\nfrom nvalchemi.data import AtomicData, Batch\nimport torch\n```",
+    "result_schema": {
+      "num_graphs": "int",
+      "num_nodes": "int",
+      "positions_shape": "list",
+      "energy_shape": "list",
+      "atoms_per_graph": "list"
+    },
+    "timeout_sec": 480
+  },
+  "ds-2-ase-roundtrip": {
+    "id": "ds-2-ase-roundtrip",
+    "skill": "nvalchemi",
+    "prompt": "Using nvalchemi and ASE (CPU only), write `solution.py` that:\n1. Builds an ASE Atoms object: NaCl rock-salt conventional cell (8 atoms, a=5.64 A, periodic).\n2. Converts it to nvalchemi's AtomicData using AtomicData.from_ase() (if available) or by constructing manually from ASE data.\n4. Converts the AtomicData back to an ASE Atoms object using .to_ase() (if available) or by extracting positions/numbers.\n5. Computes the max absolute difference between original and round-trip positions, and checks the chemical symbols match.\nWrite `result.json` with: max_pos_diff (float), symbols_match (bool), num_atoms (int).\n\nKey imports:\n```python\nfrom nvalchemi.data import AtomicData\nfrom ase.build import bulk\nimport torch, numpy as np\n```",
+    "result_schema": {
+      "max_pos_diff": "float",
+      "symbols_match": "bool",
+      "num_atoms": "int"
+    },
+    "timeout_sec": 480
+  },
+  "ds-3-batch-mutation": {
+    "id": "ds-3-batch-mutation",
+    "skill": "nvalchemi",
+    "prompt": "Using nvalchemi (CPU only), write `solution.py` that:\n1. Creates a Batch from four AtomicData systems of sizes 4, 6, 3, 7 atoms (any element, random positions, cubic cell, pbc=True).\n2. Converts the batch back to a list of AtomicData using a round-trip method and verifies each system's atom count survived.\n3. Demonstrates dict-style attribute access on the batch for positions and atomic_numbers.\nWrite `result.json` with: roundtrip_sizes (list of 4 ints), sizes_preserved (bool), num_graphs (int).\n\nKey imports:\n```python\nfrom nvalchemi.data import AtomicData, Batch\nimport torch\n```",
+    "result_schema": {
+      "roundtrip_sizes": "list",
+      "sizes_preserved": "bool",
+      "num_graphs": "int"
+    },
+    "timeout_sec": 480
+  },
+  "dt-1-torchrun-gloo": {
+    "id": "dt-1-torchrun-gloo",
+    "skill": "nvalchemi",
+    "prompt": "Using nvalchemi (CPU only, no GPUs available), write `solution.py` that:\n1. Contains a training-style script using nvalchemi's distributed support: initialize the distributed runtime the nvalchemi way, determine rank and world size through nvalchemi's utilities, and run a tiny DDP-wrapped training step (or a rank-aware barrier + all_reduce of a tensor) on the gloo backend.\n2. When executed directly (python solution.py), it must RELAUNCH itself under torchrun with 2 processes on CPU (subprocess call to `torchrun --nproc_per_node=2 --master_port <free port> worker mode`), have each rank write `rank_<r>.json` containing its rank and world_size, and then (rank-independent, in the parent process) aggregate the per-rank files.\nWrite `result.json` with: world_size (int), ranks_seen (sorted list), all_reduce_ok (bool).\n\nKey imports:\n```python\nfrom nvalchemi.distributed import get_rank, get_world_size, barrier, all_reduce\nimport torch, subprocess\n```",
+    "result_schema": {
+      "world_size": "int",
+      "ranks_seen": "list",
+      "all_reduce_ok": "bool"
+    },
+    "timeout_sec": 480
+  },
+  "dt-2-single-process-fallback": {
+    "id": "dt-2-single-process-fallback",
+    "skill": "nvalchemi",
+    "prompt": "Using nvalchemi (CPU only), write `solution.py` that:\n1. WITHOUT initializing torch.distributed or setting any RANK/WORLD_SIZE environment variables, calls nvalchemi's rank/world-size utility helpers used in training code.\n2. Records the fallback values they return in single-process mode, and confirms a barrier/all_reduce helper call is a safe no-op in this mode (does not raise).\nWrite `result.json` with: rank (int), world_size (int), collectives_safe (bool).\n\nKey imports:\n```python\nfrom nvalchemi.distributed import get_rank, get_world_size, barrier, all_reduce\nimport torch\n```",
+    "result_schema": {
+      "rank": "int",
+      "world_size": "int",
+      "collectives_safe": "bool"
+    },
+    "timeout_sec": 480
+  },
+  "dy-1-nve-conservation": {
+    "id": "dy-1-nve-conservation",
+    "skill": "nvalchemi",
+    "prompt": "Using nvalchemi (CPU only), write `solution.py` that:\n1. Builds a small Lennard-Jones system: an 8-atom simple-cubic argon arrangement in a periodic box, with a small random velocity perturbation (use nvalchemi's built-in LennardJonesModelWrapper).\n2. Runs NVE molecular dynamics for 200 steps with a conservative timestep using nvalchemi's NVE dynamics (CPU).\n3. Tracks total energy (potential + kinetic) at start and end and computes the relative drift |E_end - E_start| / |E_start|.\nWrite `result.json` with: e_start (float), e_end (float), rel_drift (float), steps (int).\n\nKey imports:\n```python\nfrom nvalchemi.models.lj import LennardJonesModelWrapper\nfrom nvalchemi.dynamics import NVE\nimport torch\n```",
+    "result_schema": {
+      "e_start": "float",
+      "e_end": "float",
+      "rel_drift": "float",
+      "steps": "int"
+    },
+    "timeout_sec": 480
+  },
+  "dy-2-fire-relaxation": {
+    "id": "dy-2-fire-relaxation",
+    "skill": "nvalchemi",
+    "prompt": "Using nvalchemi (CPU only), write `solution.py` that:\n1. Builds 2 small Lennard-Jones clusters (about 8 atoms each) with rattled/perturbed positions (clearly not at equilibrium), batched together.\n2. Relaxes them with nvalchemi's FIRE geometry optimization through the dynamics API, with a force convergence threshold of 0.05 eV/A and convergence detection enabled.\n3. Reports the final maximum force magnitude per system.\nWrite `result.json` with: fmax_per_system (list of floats), all_converged (bool).\n\nKey imports:\n```python\nfrom nvalchemi.models.lj import LennardJonesModelWrapper\nfrom nvalchemi.dynamics import FIRE\nfrom nvalchemi.data import Batch\nimport torch\n```",
+    "result_schema": {
+      "fmax_per_system": "list",
+      "all_converged": "bool"
+    },
+    "timeout_sec": 480
+  },
+  "dy-3-fused-pipeline": {
+    "id": "dy-3-fused-pipeline",
+    "skill": "nvalchemi",
+    "prompt": "Using nvalchemi (CPU only), write `solution.py` that:\n1. Composes a two-stage single-device dynamics pipeline using nvalchemi's FusedStage composition: first a short FIRE relaxation stage with a loose convergence threshold, then a short MD stage (about 20 steps), both on the same CPU device with a built-in LJ model on one small batch (2 systems, about 8 atoms each).\n2. Runs the fused pipeline to completion.\n3. Confirms both stages executed on the batch (e.g. via per-stage step counters, hook counts, or stage status).\nWrite `result.json` with: stages_run (int), pipeline_completed (bool).\n\nKey imports:\n```python\nfrom nvalchemi.models.lj import LennardJonesModelWrapper\nfrom nvalchemi.dynamics import FIRE, NVE, FusedStage\nfrom nvalchemi.data import Batch\nimport torch\n```",
+    "result_schema": {
+      "stages_run": "int",
+      "pipeline_completed": "bool"
+    },
+    "timeout_sec": 480
+  },
+  "dh-1-custom-hook": {
+    "id": "dh-1-custom-hook",
+    "skill": "nvalchemi",
+    "prompt": "Using nvalchemi (CPU only), write `solution.py` that:\n1. Implements a custom dynamics hook by subclassing nvalchemi's Hook base class that counts how many times it fires at the after-step stage and records the current max force magnitude each time.\n2. Registers it on a short MD run (nvalchemi dynamics, built-in LJ model, 1 small system, 30 steps, CPU).\n3. After the run, reads the hook's recorded data.\nWrite `result.json` with: times_fired (int), fmax_records (int), last_fmax (float).\n\nKey imports:\n```python\nfrom nvalchemi.dynamics import NVE, Hook\nfrom nvalchemi.models.lj import LennardJonesModelWrapper\nimport torch\n```",
+    "result_schema": {
+      "times_fired": "int",
+      "fmax_records": "int",
+      "last_fmax": "float"
+    },
+    "timeout_sec": 480
+  },
+  "dh-2-logging-hook-csv": {
+    "id": "dh-2-logging-hook-csv",
+    "skill": "nvalchemi",
+    "prompt": "Using nvalchemi (CPU only), write `solution.py` that:\n1. Runs a short MD simulation (nvalchemi dynamics API, built-in LJ model, 2 small systems batched, 50 steps, CPU).\n2. Attaches nvalchemi's LoggingHook with the CSV backend (or equivalent), logging every 10 steps to `md_log.csv` (per-system rows).\n3. After the run, checks the CSV exists and counts its data rows.\nWrite `result.json` with: csv_rows (int), csv_exists (bool).\n\nKey imports:\n```python\nfrom nvalchemi.dynamics import NVE, LoggingHook\nfrom nvalchemi.models.lj import LennardJonesModelWrapper\nfrom nvalchemi.data import Batch\nimport torch, os\n```",
+    "result_schema": {
+      "csv_rows": "int",
+      "csv_exists": "bool"
+    },
+    "timeout_sec": 480
+  },
+  "di-1-custom-integrator": {
+    "id": "di-1-custom-integrator",
+    "skill": "nvalchemi",
+    "prompt": "Using nvalchemi (CPU only), write `solution.py` that:\n1. Implements a custom dynamics integrator by using nvalchemi's NVE class (which is an integrator) as reference, and creates a custom dynamics class that implements velocity-Verlet integration.\n2. Runs it for 25 steps on one small Lennard-Jones system (8 atoms, CPU, built-in LJ model), with a small timestep.\n3. Confirms positions changed, tensor shapes are preserved, and the step counter advanced.\nWrite `result.json` with: steps_run (int), positions_changed (bool), shapes_preserved (bool).\n\nKey imports:\n```python\nfrom nvalchemi.dynamics import NVE\nfrom nvalchemi.models.lj import LennardJonesModelWrapper\nimport torch\n```",
+    "result_schema": {
+      "steps_run": "int",
+      "positions_changed": "bool",
+      "shapes_preserved": "bool"
+    },
+    "timeout_sec": 480
+  },
+  "di-2-convergence-integration": {
+    "id": "di-2-convergence-integration",
+    "skill": "nvalchemi",
+    "prompt": "Using nvalchemi (CPU only), write `solution.py` that:\n1. Uses nvalchemi's FIRE optimizer (which is a dynamics class) with convergence detection to stop when max force drops below 0.1 eV/A.\n2. Runs it on one mildly perturbed LJ system (CPU) until convergence or 500 steps.\n3. Reports convergence status, final fmax, steps used.\nWrite `result.json` with: converged (bool), final_fmax (float), steps_used (int).\n\nKey imports:\n```python\nfrom nvalchemi.dynamics import FIRE\nfrom nvalchemi.models.lj import LennardJonesModelWrapper\nimport torch\n```",
+    "result_schema": {
+      "converged": "bool",
+      "final_fmax": "float",
+      "steps_used": "int"
+    },
+    "timeout_sec": 480
+  },
+  "lo-1-custom-loss": {
+    "id": "lo-1-custom-loss",
+    "skill": "nvalchemi",
+    "prompt": "Using nvalchemi (CPU only), write `solution.py` that:\n1. Implements a custom per-atom-normalized mean-absolute-error energy loss by extending nvalchemi's BaseLossFunction following the library's pattern.\n2. Composes it with the built-in ForceMSELoss with weights [1.0, 5.0] using ComposedLossFunction.\n3. Evaluates the composed loss on a synthetic Batch of 4 systems with random predictions and targets, and also evaluates the custom term alone.\nWrite `result.json` with: composed_loss (float), custom_term (float), is_finite (bool).\n\nKey imports:\n```python\nfrom nvalchemi.training import BaseLossFunction, ComposedLossFunction, ForceMSELoss\nfrom nvalchemi.data import Batch\nimport torch\n```",
+    "result_schema": {
+      "composed_loss": "float",
+      "custom_term": "float",
+      "is_finite": "bool"
+    },
+    "timeout_sec": 480
+  },
+  "lo-2-masked-loss": {
+    "id": "lo-2-masked-loss",
+    "skill": "nvalchemi",
+    "prompt": "Using nvalchemi (CPU only), write `solution.py` that:\n1. Builds a synthetic Batch of 3 systems with energy predictions and targets that differ strongly on system 0 and mildly on systems 1 and 2.\n2. Evaluates a built-in EnergyMAELoss (or EnergyMSELoss) twice: once over all graphs, and once with system 0 masked out of the loss using the loss API's masking mechanism (ReductionContext or mask argument).\n3. Confirms the masked loss is strictly smaller than the unmasked loss.\nWrite `result.json` with: unmasked_loss (float), masked_loss (float), masked_smaller (bool).\n\nKey imports:\n```python\nfrom nvalchemi.training import EnergyMAELoss, ReductionContext\nfrom nvalchemi.data import Batch\nimport torch\n```",
+    "result_schema": {
+      "unmasked_loss": "float",
+      "masked_loss": "float",
+      "masked_smaller": "bool"
+    },
+    "timeout_sec": 480
+  },
+  "mw-1-wrap-custom-model": {
+    "id": "mw-1-wrap-custom-model",
+    "skill": "nvalchemi",
+    "prompt": "Using nvalchemi (CPU only), write `solution.py` that:\n1. Defines a tiny custom PyTorch model (e.g. an MLP over summed per-atom one-hot embeddings) and wraps it with nvalchemi's BaseModelMixin so it standardizes inputs and outputs, producing per-graph energy and per-atom forces.\n2. Runs a forward pass on a Batch of 3 random systems (4-8 atoms each, CPU) through the wrapped model.\n3. Confirms output keys and shapes: energy per graph, forces per atom with 3 components.\nWrite `result.json` with: has_energy (bool), has_forces (bool), energy_len (int), forces_shape (list of 2 ints).\n\nKey imports:\n```python\nfrom nvalchemi.models.base import BaseModelMixin\nfrom nvalchemi.data import Batch\nimport torch, torch.nn as nn\nfrom torch_scatter import scatter\n```",
+    "result_schema": {
+      "has_energy": "bool",
+      "has_forces": "bool",
+      "energy_len": "int",
+      "forces_shape": "list"
+    },
+    "timeout_sec": 480
+  },
+  "mw-2-wrapped-in-dynamics": {
+    "id": "mw-2-wrapped-in-dynamics",
+    "skill": "nvalchemi",
+    "prompt": "Using nvalchemi (CPU only), write `solution.py` that:\n1. Builds a model usable by nvalchemi dynamics via the library's model interface. Use the built-in LennardJonesModelWrapper shipped with nvalchemi.\n2. Runs a very short dynamics simulation (NVE, about 5 steps, dt small, CPU) on a Batch of 2 small random systems (about 8 atoms each, in 15 A cubic cells with positions spread out so atoms do not overlap).\n3. Confirms the model's outputs drove the run: positions changed and shapes are preserved.\nWrite `result.json` with: positions_changed (bool), shapes_preserved (bool), steps_run (int).\n\nKey imports:\n```python\nfrom nvalchemi.models.lj import LennardJonesModelWrapper\nfrom nvalchemi.dynamics import NVE\nfrom nvalchemi.data import Batch\nimport torch\n```",
+    "result_schema": {
+      "positions_changed": "bool",
+      "shapes_preserved": "bool",
+      "steps_run": "int"
+    },
+    "timeout_sec": 480
+  },
+  "rp-1-tensorboard-training": {
+    "id": "rp-1-tensorboard-training",
+    "skill": "nvalchemi",
+    "prompt": "Using nvalchemi (CPU only), write `solution.py` that:\n1. Sets up a small nvalchemi training run (tiny model through the library's model interface, ~10 synthetic systems, composed energy loss, 2 epochs, CPU).\n2. Attaches a TensorBoard-compatible logging hook (LoggingHook) writing to `runs/tb`, at an appropriate training stage with a low frequency.\n3. After training, verifies TensorBoard event files were produced.\nWrite `result.json` with: event_files (int), training_completed (bool).\n\nKey imports:\n```python\nfrom nvalchemi.training import TrainingStrategy, LoggingHook\nfrom nvalchemi.models.lj import LennardJonesModelWrapper\nimport torch\n```",
+    "result_schema": {
+      "event_files": "int",
+      "training_completed": "bool"
+    },
+    "timeout_sec": 480
+  },
+  "rp-2-dynamics-observability": {
+    "id": "rp-2-dynamics-observability",
+    "skill": "nvalchemi",
+    "prompt": "Using nvalchemi (CPU only), write `solution.py` that:\n1. Runs a short MD simulation (built-in LJ model, 1 small system, 60 steps, CPU) with nvalchemi's LoggingHook attached, logging to CSV (`dyn.csv`, every 10 steps).\n2. After the run, checks the CSV exists and counts its data rows.\nWrite `result.json` with: csv_rows (int), event_files (int).\n\nKey imports:\n```python\nfrom nvalchemi.dynamics import NVE, LoggingHook\nfrom nvalchemi.models.lj import LennardJonesModelWrapper\nimport torch, os, glob\n```",
+    "result_schema": {
+      "csv_rows": "int",
+      "event_files": "int"
+    },
+    "timeout_sec": 480
+  },
+  "zp-1-tuned-loader": {
+    "id": "zp-1-tuned-loader",
+    "skill": "nvalchemi",
+    "prompt": "Using nvalchemi (CPU only), write `solution.py` that:\n1. Writes 50 small random AtomicData systems to `perf.zarr`.\n2. Builds a DataLoader tuned for shuffled random-access reads: enable validation skipping on the trusted store, use a prefetch factor of at least 8, and shuffled iteration (CPU device, batch_size 10; do not enable CUDA streams).\n3. Iterates one full epoch and times it.\nWrite `result.json` with: skip_validation (bool, the value actually set), prefetch_factor (int, the value actually set), epoch_seconds (float), total_graphs (int).\n\nKey imports:\n```python\nfrom nvalchemi.data import AtomicData, AtomicDataZarrWriter, DataLoader\nimport torch, time\n```",
+    "result_schema": {
+      "skip_validation": "bool",
+      "prefetch_factor": "int",
+      "epoch_seconds": "float",
+      "total_graphs": "int"
+    },
+    "timeout_sec": 480
+  },
+  "zp-2-write-config": {
+    "id": "zp-2-write-config",
+    "skill": "nvalchemi",
+    "prompt": "Using nvalchemi (CPU only), write `solution.py` that:\n1. Configures nvalchemi's Zarr write configuration for fast graph-like random reads with an explicit chunk size of 1000 and a shard size that is a valid multiple of it (choose 4000).\n2. Writes 20 small random AtomicData systems to `tuned.zarr` using that configuration.\n3. Reads one sample back to prove the store is valid.\nWrite `result.json` with: chunk_size (int), shard_size (int), read_ok (bool).\n\nKey imports:\n```python\nfrom nvalchemi.data import AtomicData, AtomicDataZarrWriter\nimport torch\n```",
+    "result_schema": {
+      "chunk_size": "int",
+      "shard_size": "int",
+      "read_ok": "bool"
+    },
+    "timeout_sec": 480
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "num_graphs": 3,
+  "num_nodes": 26,
+  "positions_shape": [
+    26,
+    3
+  ],
+  "energy_shape": [
+    3,
+    1
+  ],
+  "atoms_per_graph": [
+    5,
+    8,
+    13
+  ]
+}
