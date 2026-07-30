@@ -445,6 +445,7 @@ class BenchmarkConfig:
     proposer_model: str = "nvidia/nemotron-3-ultra"
     max_concurrent: int = 2
     timeout_per_task: int = 600
+    python_executable: str = "/home/marcelo/.local/share/uv/python/cpython-3.13-linux-aarch64-gnu/bin/python3.13"
 
 
 # ─── Prompt Generators ───────────────────────────────────────────────────

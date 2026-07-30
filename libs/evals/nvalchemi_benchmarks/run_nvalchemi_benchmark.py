@@ -115,8 +115,8 @@ print("SOLUTION_WRITTEN")'''
     gen_script.write_text(runner_script)
     
     env = os.environ.copy()
-    # Use uv's python environment
-    uv_python = f"{config.repo_path}/.venv/bin/python3"
+    # Use uv's python environment - use the actual python executable from config
+    uv_python = config.python_executable
     env["PYTHONPATH"] = f"{config.repo_path}:{env.get('PYTHONPATH', '')}"
     env["VIRTUAL_ENV"] = f"{config.repo_path}/.venv"
     env["PATH"] = f"{config.repo_path}/.venv/bin:{env.get('PATH', '')}"

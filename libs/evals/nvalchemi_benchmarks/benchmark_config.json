@@ -1,6 +1,6 @@
 {
-  "repo_path": "/home/marcelo/aifs_evals",
-  "evals_path": "/home/marcelo/aifs_evals/nvalchemi_benchmarks",
+  "repo_path": "/home/marcelo/deepagents-fork",
+  "evals_path": "/home/marcelo/deepagents-fork/libs/evals/nvalchemi_benchmarks",
   "model_with_skill": "nvidia/nemotron-3-super",
   "model_without_skill": "nvidia/nemotron-3-super",
   "proposer_model": "nvidia/nemotron-3-ultra",
