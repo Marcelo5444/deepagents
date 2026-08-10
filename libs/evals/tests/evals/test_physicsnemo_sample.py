@@ -26,12 +26,17 @@ from typing import TYPE_CHECKING
 
 import pytest
 from deepagents import create_deep_agent
+from deepagents.backends.composite import CompositeBackend
+from deepagents.backends.filesystem import FilesystemBackend
 from deepagents.backends.local_shell import LocalShellBackend
 
 if TYPE_CHECKING:
     from langchain_core.language_models import BaseChatModel
 
 _DEFAULT_SITE_PACKAGES = "/home/marcelo/aifs_evals/.venv/lib/python3.13/site-packages"
+# Real PhysicsNeMo repo for the agent to browse read-only (mounted at /repo/).
+# Override with PHYSICSNEMO_REPO.
+_DEFAULT_REPO = "/home/marcelo/sci-repos/physicsnemo"
 # Judge must be a model on the key's "default-models" scope that returns a
 # parseable score for openevals. Nemotron 3 Ultra returns EMPTY output for the
 # structured judge call; Nemotron 3 Super v3 returns a usable boolean. (Verified
@@ -64,20 +69,32 @@ def _workdir(item_id: str) -> Path:
 
 def _run_agentic(item: dict, model: BaseChatModel) -> str:
     """Run one item agentically; return the agent's final text."""
-    backend = LocalShellBackend(
+    work = LocalShellBackend(
         root_dir=str(_workdir(item["id"])),
         virtual_mode=True,  # shared root for file tools + execute cwd
         timeout=300,
         env=_env(),
     )
+    # Mount the real PhysicsNeMo repo read-only at /repo/ so the agent can check
+    # actual module paths / APIs instead of guessing. /repo/ routes to the repo;
+    # everything else + `execute` use the workdir backend.
+    backend: CompositeBackend | LocalShellBackend = work
+    repo = os.getenv("PHYSICSNEMO_REPO", _DEFAULT_REPO)
+    if Path(repo).is_dir():
+        backend = CompositeBackend(
+            default=work,
+            routes={"/repo/": FilesystemBackend(root_dir=repo, virtual_mode=True)},
+        )
     agent = create_deep_agent(model=model, backend=backend)
     query = (
         f"{item['question']}\n\n"
-        "Use your tools. If the task asks to run code, call `write` to create a "
-        "script and `execute` to run it (`python3 <script>`); physicsnemo and "
-        "torch are importable in the shell. If it is a knowledge/menu question, "
-        "answer directly and precisely, citing real module paths. If the request "
-        "is outside PhysicsNeMo's scope, say so clearly rather than inventing an API."
+        "Use your tools. The real PhysicsNeMo source is mounted read-only at "
+        "`/repo/` — consult it (`read`/`grep` under `/repo/physicsnemo/`) for "
+        "exact class names, module paths, and constructor signatures; do NOT guess "
+        "an API. If the task asks to run code, call `write` to create a script and "
+        "`execute` to run it (`python3 <script>`); physicsnemo and torch are "
+        "importable in the shell. If the request is outside PhysicsNeMo's scope, "
+        "say so clearly rather than inventing an API."
     )
     config = {"configurable": {"thread_id": f"physicsnemo-{item['id']}"}, "recursion_limit": 150}
     result = agent.invoke({"messages": [{"role": "user", "content": query}]}, config)

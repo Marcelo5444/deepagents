@@ -28,6 +28,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 from deepagents import create_deep_agent
+from deepagents.backends.composite import CompositeBackend
+from deepagents.backends.filesystem import FilesystemBackend
 from deepagents.backends.local_shell import LocalShellBackend
 
 if TYPE_CHECKING:
@@ -43,6 +45,11 @@ from benchmark_spec import NVALCHEMI_TASKS  # noqa: E402
 # agent's shell runs solution.py with this on PYTHONPATH so `import torch` and
 # `import nvalchemi` resolve even though the evals venv lacks them.
 _DEFAULT_SITE_PACKAGES = "/home/marcelo/aifs_evals/.venv/lib/python3.13/site-packages"
+
+# The real nvalchemi repo, cloned for the agent to BROWSE (read-only) so it can
+# check actual APIs instead of guessing. Mounted at /repo/ via a CompositeBackend.
+# Override with NVALCHEMI_REPO.
+_DEFAULT_REPO = "/home/marcelo/sci-repos/nvalchemi-toolkit"
 
 
 def _nvalchemi_env() -> dict[str, str]:
@@ -104,7 +111,7 @@ def _verify(task_id: str, workdir: Path) -> dict:
 def _run_task(task, model: BaseChatModel) -> dict:
     """Run one nvalchemi task agentically and return the verifier verdict."""
     workdir = _workdir(task.id)
-    backend = LocalShellBackend(
+    work = LocalShellBackend(
         root_dir=str(workdir),
         # virtual_mode=True: root_dir is the virtual root for BOTH the file tools
         # and `execute` (cwd). With False, write_file's "/solution.py" and the
@@ -114,18 +121,32 @@ def _run_task(task, model: BaseChatModel) -> dict:
         timeout=task.timeout_sec,
         env=_nvalchemi_env(),
     )
+    # Mount the real nvalchemi repo read-only at /repo/ so the agent can grep /
+    # read actual source to check APIs. File ops under /repo/ route to the repo;
+    # everything else (incl. solution.py) and `execute` use the workdir backend.
+    backend: CompositeBackend | LocalShellBackend = work
+    repo = os.getenv("NVALCHEMI_REPO", _DEFAULT_REPO)
+    if Path(repo).is_dir():
+        backend = CompositeBackend(
+            default=work,
+            routes={"/repo/": FilesystemBackend(root_dir=repo, virtual_mode=True)},
+        )
     agent = create_deep_agent(model=model, backend=backend)
 
     query = (
         f"{task.prompt}\n\n"
         "Act now using tools. Do NOT describe a plan in prose. Steps:\n"
-        "1. Call the `write` tool to create `solution.py` with the full solution.\n"
-        "2. Call the `execute` tool to run it: `python3 solution.py`.\n"
-        "3. If it errors, call `edit`/`write` to fix and re-run. Repeat until it "
-        "writes a correct `result.json`.\n"
+        "1. If unsure of an nvalchemi API, FIRST consult the real source mounted "
+        "read-only at `/repo/` (e.g. `grep`/`read` under `/repo/nvalchemi/`) to "
+        "get exact class names, constructor signatures, and import paths. Do NOT "
+        "guess an API — check it.\n"
+        "2. Call the `write` tool to create `solution.py` with the full solution.\n"
+        "3. Call the `execute` tool to run it: `python3 solution.py`.\n"
+        "4. If it errors, `read` the relevant source under `/repo/`, fix with "
+        "`edit`/`write`, and re-run. Repeat until it writes a correct `result.json`.\n"
         "The nvalchemi library is already importable in the shell (torch, "
-        "nvalchemi, ase, zarr are on PYTHONPATH). Your working directory is the "
-        "task directory — write `solution.py` and `result.json` there."
+        "nvalchemi, ase, zarr are on PYTHONPATH). Write `solution.py` and "
+        "`result.json` in your working directory (NOT under /repo/)."
     )
     config = {"configurable": {"thread_id": f"nvalchemi-{task.id}"}, "recursion_limit": 150}
     agent.invoke({"messages": [{"role": "user", "content": query}]}, config)
