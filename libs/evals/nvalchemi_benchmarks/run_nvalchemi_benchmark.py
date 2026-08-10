@@ -148,9 +148,16 @@ print("SOLUTION_WRITTEN")'''
                 "detail": "solution.py not created",
             }
 
-        # Now run the solution
+        # Now run the solution. CRITICAL: must use a python that has torch +
+        # nvalchemi installed. `uv run python` in the task workdir creates a bare
+        # ephemeral env (no torch) -> ModuleNotFoundError, masking real model
+        # failures. The aifs_evals venv has torch+nvalchemi+ase+zarr.
+        solution_python = os.getenv(
+            "NVALCHEMI_SOLUTION_PYTHON",
+            "/home/marcelo/aifs_evals/.venv/bin/python",
+        )
         run_result = subprocess.run(
-            ["uv", "run", "python", "solution.py"],
+            [solution_python, "solution.py"],
             cwd=workdir,
             capture_output=True,
             text=True,
@@ -158,9 +165,11 @@ print("SOLUTION_WRITTEN")'''
             env={**env, "TORCHDYNAMO_DISABLE": "1", "CUDA_VISIBLE_DEVICES": ""},
         )
 
-        # Verify with runner
+        # Verify with runner. NOTE: runner.py has no "verify" subcommand and
+        # imports benchmark_spec from its own dir. config.evals_path already IS
+        # the benchmark dir (contains runner.py), so cwd = evals_path directly.
         verify_result = subprocess.run(
-            ["uv", "run", "python", "runner.py", "verify", "--task", task_id, "--workdir", str(workdir), "--arm", arm],
+            ["uv", "run", "python", "runner.py", "--task", task_id, "--workdir", str(workdir), "--arm", arm],
             cwd=config.evals_path,
             capture_output=True,
             text=True,
