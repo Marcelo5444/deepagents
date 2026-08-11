@@ -108,6 +108,31 @@ def _verify(task_id: str, workdir: Path) -> dict:
         }
 
 
+def _dump_trajectory(task_id: str, workdir: Path, result: dict) -> None:
+    """Serialize the agent's full message history to <workdir>/trajectory.json.
+
+    Each entry: {"step": N, "type": "ai|human|tool", "content": str,
+    "tool_calls": [...], "tool_call_id": str}. Lets you inspect what the agent
+    reasoned, which tools it called, and what they returned — without LangSmith.
+    """
+    msgs = result.get("messages", []) if isinstance(result, dict) else []
+    out = []
+    for i, m in enumerate(msgs):
+        entry = {
+            "step": i,
+            "type": getattr(m, "type", type(m).__name__),
+            "content": m.content if isinstance(getattr(m, "content", ""), str) else str(getattr(m, "content", "")),
+        }
+        tcs = getattr(m, "tool_calls", None)
+        if tcs:
+            entry["tool_calls"] = [{"name": tc["name"], "args": tc["args"]} for tc in tcs]
+        tcid = getattr(m, "tool_call_id", None)
+        if tcid:
+            entry["tool_call_id"] = tcid
+        out.append(entry)
+    (workdir / "trajectory.json").write_text(json.dumps(out, indent=2, default=str), encoding="utf-8")
+
+
 def _run_task(task, model: BaseChatModel) -> dict:
     """Run one nvalchemi task agentically and return the verifier verdict."""
     workdir = _workdir(task.id)
@@ -149,7 +174,12 @@ def _run_task(task, model: BaseChatModel) -> dict:
         "`result.json` in your working directory (NOT under /repo/)."
     )
     config = {"configurable": {"thread_id": f"nvalchemi-{task.id}"}, "recursion_limit": 150}
-    agent.invoke({"messages": [{"role": "user", "content": query}]}, config)
+    result = agent.invoke({"messages": [{"role": "user", "content": query}]}, config)
+
+    # Dump the full agent trajectory (reasoning + tool calls + tool outputs) to
+    # disk so it can be inspected without LangSmith. Each message is serialized
+    # with its type, content, and tool_calls/tool_call_id where present.
+    _dump_trajectory(task.id, workdir, result)
 
     return _verify(task.id, workdir)
 

@@ -11,7 +11,7 @@ Two categories:
 
 physicsnemo is NOT in the evals venv; it lives in a separate venv whose
 site-packages is exposed to the agent's shell via PYTHONPATH. Override with
-PHYSICSNEMO_SITE_PACKAGES. The judge model defaults to Nemotron 3 Ultra;
+PHYSICSNEMO_SITE_PACKAGES. The judge model defaults to Nemotron 3 Super v3;
 override with PHYSICSNEMO_JUDGE_MODEL.
 
 Drives the hep ralph loop via --category physicsnemo.
@@ -67,6 +67,26 @@ def _workdir(item_id: str) -> Path:
     return d
 
 
+def _dump_trajectory(item_id: str, workdir: Path, result: dict) -> None:
+    """Serialize the agent's full message history to <workdir>/trajectory.json."""
+    msgs = result.get("messages", []) if isinstance(result, dict) else []
+    out = []
+    for i, m in enumerate(msgs):
+        entry = {
+            "step": i,
+            "type": getattr(m, "type", type(m).__name__),
+            "content": m.content if isinstance(getattr(m, "content", ""), str) else str(getattr(m, "content", "")),
+        }
+        tcs = getattr(m, "tool_calls", None)
+        if tcs:
+            entry["tool_calls"] = [{"name": tc["name"], "args": tc["args"]} for tc in tcs]
+        tcid = getattr(m, "tool_call_id", None)
+        if tcid:
+            entry["tool_call_id"] = tcid
+        out.append(entry)
+    (workdir / "trajectory.json").write_text(json.dumps(out, indent=2, default=str), encoding="utf-8")
+
+
 def _run_agentic(item: dict, model: BaseChatModel) -> str:
     """Run one item agentically; return the agent's final text."""
     work = LocalShellBackend(
@@ -99,6 +119,11 @@ def _run_agentic(item: dict, model: BaseChatModel) -> str:
     config = {"configurable": {"thread_id": f"physicsnemo-{item['id']}"}, "recursion_limit": 150}
     result = agent.invoke({"messages": [{"role": "user", "content": query}]}, config)
     msgs = result.get("messages", [])
+
+    # Dump the full agent trajectory (reasoning + tool calls + tool outputs) to
+    # disk so it can be inspected without LangSmith.
+    _dump_trajectory(item["id"], _workdir(item["id"]), result)
+
     final = msgs[-1].content if msgs else ""
     return final if isinstance(final, str) else str(final)
 
