@@ -41,10 +41,23 @@ sys.path.insert(0, str(_BENCHMARK_DIR))
 
 from benchmark_spec import NVALCHEMI_TASKS  # noqa: E402
 
-# Site-packages of the venv that actually has torch/nvalchemi/ase/zarr. The
-# agent's shell runs solution.py with this on PYTHONPATH so `import torch` and
-# `import nvalchemi` resolve even though the evals venv lacks them.
-_DEFAULT_SITE_PACKAGES = "/home/marcelo/aifs_evals/.venv/lib/python3.13/site-packages"
+# Venv that actually has torch/nvalchemi/ase/zarr. The agent's shell gets this
+# venv's bin FIRST on PATH (so `python3` IS the venv python) plus its
+# site-packages on PYTHONPATH as belt-and-braces. NOTE: this is a python3.12
+# venv — an earlier revision hardcoded a python3.13 site-packages path that
+# never existed, so `import nvalchemi` silently resolved to a stale user-site
+# copy instead. The path is now derived from the venv's real version dir.
+_DEFAULT_VENV = "/home/marcelo/aifs_evals/.venv"
+
+
+def _default_site_packages() -> str:
+    """Return the site-packages dir of the venv that has nvalchemi installed."""
+    venv_lib = Path(_DEFAULT_VENV) / "lib"
+    for d in sorted(venv_lib.glob("python3.*"), reverse=True):
+        sp = d / "site-packages"
+        if (sp / "nvalchemi").is_dir():
+            return str(sp)
+    return str(venv_lib / "python3.12" / "site-packages")
 
 # The real nvalchemi repo, cloned for the agent to BROWSE (read-only) so it can
 # check actual APIs instead of guessing. Mounted at /repo/ via a CompositeBackend.
@@ -55,22 +68,47 @@ _DEFAULT_REPO = "/home/marcelo/sci-repos/nvalchemi-toolkit"
 def _nvalchemi_env() -> dict[str, str]:
     """Shell environment for the agent's execute tool.
 
-    CPU-only, dynamo disabled (matches run_nvalchemi_benchmark.py), with the
-    nvalchemi-bearing site-packages on PYTHONPATH. PATH provides a bare shell.
+    CPU-only, dynamo disabled (matches run_nvalchemi_benchmark.py). The
+    nvalchemi venv's bin is FIRST on PATH, so `python3` in the shell IS the
+    venv python (torch/nvalchemi/ase/zarr import guaranteed); its
+    site-packages are also on PYTHONPATH as a fallback.
+
+    The /repo/ virtual mount is only visible to the FILE tools, not the
+    shell — so the repo's real path is exported as NVALCHEMI_REPO_DIR for
+    shell commands (`ls $NVALCHEMI_REPO_DIR`, `grep -r ...`).
     """
-    site_packages = os.getenv("NVALCHEMI_SOLUTION_SITE_PACKAGES", _DEFAULT_SITE_PACKAGES)
+    site_packages = os.getenv("NVALCHEMI_SOLUTION_SITE_PACKAGES") or _default_site_packages()
     return {
-        "PATH": "/usr/local/bin:/usr/bin:/bin",
+        "PATH": f"{_DEFAULT_VENV}/bin:/usr/local/bin:/usr/bin:/bin",
         "PYTHONPATH": site_packages,
         "TORCHDYNAMO_DISABLE": "1",
         "CUDA_VISIBLE_DEVICES": "",
         "HOME": os.getenv("HOME", "/tmp"),
+        "NVALCHEMI_REPO_DIR": os.getenv("NVALCHEMI_REPO", _DEFAULT_REPO),
     }
 
 
 def _workdir(task_id: str) -> Path:
     d = _BENCHMARK_DIR / "work" / task_id / "agentic"
     d.mkdir(parents=True, exist_ok=True)
+    # Make the repo visible to the agent's SHELL too. The CompositeBackend's
+    # /repo/ route only serves the FILE tools — `execute` runs on the real
+    # filesystem with cwd=workdir, so `ls /repo` fails ("No such file or
+    # directory") and the agent wastes steps reconciling the contradiction.
+    # A `repo` symlink INSIDE the workdir makes `ls repo`, `grep -r repo/...`
+    # work from the shell cwd (relative path), mirroring the file tools'
+    # /repo/ view. Read-only in effect: file tools still can't write through
+    # /repo/ (the shell could, but the eval's own writes stay in the workdir).
+    repo = os.getenv("NVALCHEMI_REPO", _DEFAULT_REPO)
+    link = d / "repo"
+    if Path(repo).is_dir():
+        try:
+            if link.is_symlink() and os.readlink(link) != repo:
+                link.unlink()
+            if not link.exists() and not link.is_symlink():
+                link.symlink_to(repo)
+        except OSError:
+            pass  # best-effort; NVALCHEMI_REPO_DIR env is the documented fallback
     return d
 
 
@@ -158,20 +196,40 @@ def _run_task(task, model: BaseChatModel) -> dict:
         )
     agent = create_deep_agent(model=model, backend=backend)
 
+    # Ground-truth environment notes (verified):
+    #   - /repo/ = the nvalchemi-TOOLKIT repo (examples/, benchmark/, test/) —
+    #     it has NO importable package source. Real runnable examples live under
+    #     /repo/examples/. The importable nvalchemi package is the one installed
+    #     in the shell's venv.
+    #   - /repo/ is visible to the file tools ONLY. For shell commands use the
+    #     real path in $NVALCHEMI_REPO_DIR.
+    #   - `python3` in the shell IS the nvalchemi venv python (torch/nvalchemi/
+    #     ase/zarr all import); inspect the installed API with
+    #     `python3 -c "import inspect, nvalchemi...; print(inspect.getsource(...))"`.
     query = (
         f"{task.prompt}\n\n"
         "Act now using tools. Do NOT describe a plan in prose. Steps:\n"
-        "1. If unsure of an nvalchemi API, FIRST consult the real source mounted "
-        "read-only at `/repo/` (e.g. `grep`/`read` under `/repo/nvalchemi/`) to "
-        "get exact class names, constructor signatures, and import paths. Do NOT "
-        "guess an API — check it.\n"
-        "2. Call the `write` tool to create `solution.py` with the full solution.\n"
+        "1. Discover the exact API FIRST — do not guess:\n"
+        "   - runnable, tested examples: `ls`/`read` under `/repo/examples/` "
+        "(file tools; for shell use `ls repo/examples` — a `repo` symlink in "
+        "your workdir, or $NVALCHEMI_REPO_DIR/examples)\n"
+        "   - the installed package's real signatures: `python3 -c "
+        "\"import inspect, nvalchemi; from nvalchemi.models.lj import "
+        "LennardJonesModelWrapper; print(inspect.signature(...))\"` or "
+        "`python3 -c \"import nvalchemi.models.lj as m; print(m.__file__)\"` "
+        "then `grep` that installed source (it IS on disk and readable).\n"
+        "2. Call the `write` tool to create `solution.py` with the full solution "
+        "immediately — keep the computation SMALL (tiny systems, few steps) so it "
+        "finishes fast.\n"
         "3. Call the `execute` tool to run it: `python3 solution.py`.\n"
-        "4. If it errors, `read` the relevant source under `/repo/`, fix with "
-        "`edit`/`write`, and re-run. Repeat until it writes a correct `result.json`.\n"
-        "The nvalchemi library is already importable in the shell (torch, "
-        "nvalchemi, ase, zarr are on PYTHONPATH). Write `solution.py` and "
-        "`result.json` in your working directory (NOT under /repo/)."
+        "4. If it errors: read the traceback, check the API against the installed "
+        "package, fix with `edit`/`write`, and re-run. Repeat until it writes a "
+        "correct `result.json`.\n"
+        "5. Verify before finishing: `execute ls` — if `result.json` is missing, "
+        "your task is NOT done; keep iterating.\n"
+        "Write `solution.py` and `result.json` in your working directory (NOT "
+        "under /repo/). The shell's `python3` already has torch, nvalchemi, ase, "
+        "zarr importable."
     )
     config = {"configurable": {"thread_id": f"nvalchemi-{task.id}"}, "recursion_limit": 500}
     result = agent.invoke({"messages": [{"role": "user", "content": query}]}, config)
