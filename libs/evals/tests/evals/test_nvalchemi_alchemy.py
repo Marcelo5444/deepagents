@@ -229,7 +229,15 @@ def _run_task(task, model: BaseChatModel) -> dict:
         "your task is NOT done; keep iterating.\n"
         "Write `solution.py` and `result.json` in your working directory (NOT "
         "under /repo/). The shell's `python3` already has torch, nvalchemi, ase, "
-        "zarr importable."
+        "zarr importable.\n"
+        "\n"
+        "CRITICAL path rule for the file tools (`write`/`edit`/`read`): use "
+        "RELATIVE paths (`solution.py`) or virtual-root paths (`/solution.py`) "
+        "ONLY. NEVER use the absolute disk path that `pwd` prints — the file "
+        "tools run in a virtual root, so an absolute path like "
+        "`/home/marcelo/.../solution.py` gets double-prefixed and lands "
+        "somewhere the shell cannot see (your `execute` will then fail with "
+        "'No such file or directory' even though write reported success)."
     )
     config = {"configurable": {"thread_id": f"nvalchemi-{task.id}"}, "recursion_limit": 500}
     result = agent.invoke({"messages": [{"role": "user", "content": query}]}, config)
