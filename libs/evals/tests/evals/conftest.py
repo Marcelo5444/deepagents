@@ -262,6 +262,11 @@ def model(model_name: str, request: pytest.FixtureRequest) -> BaseChatModel:
         # 5s read timeout. This causes indefinite hangs on TCP stalls.
         # See: https://github.com/OpenRouterTeam/python-sdk/issues/72
         kwargs["timeout"] = 120_000  # ms
+    if model_name.startswith("nvidia:"):
+        # ChatNVIDIA defaults to a 60s read timeout, which is too short for
+        # Nemotron models on complex agentic tasks with long context windows.
+        # Increase to 300s to avoid ReadTimeout killing the agent mid-task.
+        kwargs["timeout"] = 300
     if model_name.startswith("openai:"):
         # Match the SDK's built-in `openai` provider profile, which sets
         # `use_responses_api=True` for all openai: models. The fixture

@@ -173,7 +173,7 @@ def _run_task(task, model: BaseChatModel) -> dict:
         "nvalchemi, ase, zarr are on PYTHONPATH). Write `solution.py` and "
         "`result.json` in your working directory (NOT under /repo/)."
     )
-    config = {"configurable": {"thread_id": f"nvalchemi-{task.id}"}, "recursion_limit": 150}
+    config = {"configurable": {"thread_id": f"nvalchemi-{task.id}"}, "recursion_limit": 500}
     result = agent.invoke({"messages": [{"role": "user", "content": query}]}, config)
 
     # Dump the full agent trajectory (reasoning + tool calls + tool outputs) to

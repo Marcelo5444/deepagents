@@ -116,7 +116,7 @@ def _run_agentic(item: dict, model: BaseChatModel) -> str:
         "importable in the shell. If the request is outside PhysicsNeMo's scope, "
         "say so clearly rather than inventing an API."
     )
-    config = {"configurable": {"thread_id": f"physicsnemo-{item['id']}"}, "recursion_limit": 150}
+    config = {"configurable": {"thread_id": f"physicsnemo-{item['id']}"}, "recursion_limit": 500}
     result = agent.invoke({"messages": [{"role": "user", "content": query}]}, config)
     msgs = result.get("messages", [])
 
