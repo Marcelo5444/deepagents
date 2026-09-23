@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Deterministic verification runner for nvalchemi benchmark tasks.
-Run from benchmark root: python runner.py verify --task <id> --workdir <path> --arm <with|without>
+Run from benchmark root: python runner.py --task <id> --workdir <path>
 """
 
 import argparse
@@ -204,7 +204,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--task", required=True)
     parser.add_argument("--workdir", required=True)
-    parser.add_argument("--arm", required=True, choices=["with", "without"])
+    parser.add_argument("--arm", default=None, help="vestigial (two-arm benchmark removed); accepted for backward compatibility")
     parser.add_argument("--round", type=int, default=1)
     args = parser.parse_args()
     

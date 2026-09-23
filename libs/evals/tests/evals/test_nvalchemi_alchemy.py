@@ -68,7 +68,7 @@ _DEFAULT_REPO = "/home/marcelo/sci-repos/nvalchemi-toolkit"
 def _nvalchemi_env() -> dict[str, str]:
     """Shell environment for the agent's execute tool.
 
-    CPU-only, dynamo disabled (matches run_nvalchemi_benchmark.py). The
+    CPU-only, dynamo disabled. The
     nvalchemi venv's bin is FIRST on PATH, so `python3` in the shell IS the
     venv python (torch/nvalchemi/ase/zarr import guaranteed); its
     site-packages are also on PYTHONPATH as a fallback.

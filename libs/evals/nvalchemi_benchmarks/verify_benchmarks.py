@@ -17,11 +17,11 @@ VERIFIED_TASKS = [
 
 def verify_task(task_id):
     """Verify a single task."""
-    workdir = f"/home/marcelo/deepagents-fork/libs/evals/nvalchemi_benchmarks/work/{task_id}/with"
+    workdir = f"/home/marcelo/deepagents-fork/libs/evals/nvalchemi_benchmarks/references/{task_id}"
     runner_script = "/home/marcelo/deepagents-fork/libs/evals/nvalchemi_benchmarks/runner.py"
-    uv_python = "/home/marcelo/.local/share/uv/python/cpython-3.13-linux-aarch64-gnu/bin/python3.13"
+    uv_python = "/home/marcelo/aifs_evals/.venv/bin/python"  # runner.py needs numpy (tensor verification)
     result = subprocess.run(
-        [uv_python, runner_script, "--task", task_id, "--workdir", workdir, "--arm", "with"],
+        [uv_python, runner_script, "--task", task_id, "--workdir", workdir, ],  # --arm is vestigial (removed with the two-arm benchmark)
         capture_output=True,
         text=True,
     )
