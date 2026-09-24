@@ -267,6 +267,17 @@ def model(model_name: str, request: pytest.FixtureRequest) -> BaseChatModel:
         # Nemotron models on complex agentic tasks with long context windows.
         # Increase to 300s to avoid ReadTimeout killing the agent mid-task.
         kwargs["timeout"] = 300
+        # ChatNVIDIA also defaults max_tokens to 1024. Nemotron 3 is a
+        # reasoning model: thinking, content, and tool calls share one output
+        # budget. On multi-step science tasks the model spends >1024 tokens on
+        # reasoning before its first write_file, the response is truncated
+        # mid-thought, and the agent surfaces as a bare "\n" final answer with
+        # no artifact (verified via trajectory reasoning_content + usage:
+        # output_tokens pinned at exactly 1024 while planning solution.py).
+        # Raise the ceiling so reasoning + a full tool call fit in one turn.
+        # (max_completion_tokens: the modern alias; max_tokens is deprecated and
+        # pytest turns its DeprecationWarning into a hard error.)
+        kwargs["max_completion_tokens"] = 16384
     if model_name.startswith("openai:"):
         # Match the SDK's built-in `openai` provider profile, which sets
         # `use_responses_api=True` for all openai: models. The fixture
