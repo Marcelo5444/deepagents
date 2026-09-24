@@ -161,6 +161,18 @@ def _dump_trajectory(task_id: str, workdir: Path, result: dict) -> None:
             "type": getattr(m, "type", type(m).__name__),
             "content": m.content if isinstance(getattr(m, "content", ""), str) else str(getattr(m, "content", "")),
         }
+        # Forensics: reasoning models put thinking in reasoning_content; finish signals and
+        # token usage live in additional_kwargs / usage_metadata. Without these the
+        # trajectory can't distinguish "model stopped mid-exploration" from other ends.
+        rc = getattr(m, "reasoning_content", None) or getattr(m, "additional_kwargs", {}).get("reasoning_content")
+        if rc:
+            entry["reasoning_content"] = rc if isinstance(rc, str) else str(rc)
+        ak = getattr(m, "additional_kwargs", None)
+        if ak:
+            entry["additional_kwargs"] = {k: str(v)[:200] for k, v in ak.items()}
+        um = getattr(m, "usage_metadata", None)
+        if um:
+            entry["usage_metadata"] = {k: um.get(k) for k in ("input_tokens", "output_tokens", "total_tokens") if um.get(k) is not None}
         tcs = getattr(m, "tool_calls", None)
         if tcs:
             entry["tool_calls"] = [{"name": tc["name"], "args": tc["args"]} for tc in tcs]
