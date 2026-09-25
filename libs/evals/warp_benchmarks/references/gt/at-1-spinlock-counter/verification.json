@@ -1,0 +1,17 @@
+{
+ "tensors": {
+  "counter": {
+   "file": "gt_tensors.npz",
+   "key": "counter"
+  },
+  "atomic_counter": {
+   "file": "gt_tensors.npz",
+   "key": "atomic_counter"
+  },
+  "lock": {
+   "file": "gt_tensors.npz",
+   "key": "lock"
+  }
+ },
+ "notes": "1024-thread spinlock increment: all counters == 1024, lock == 0"
+}

@@ -1,0 +1,1 @@
+{"tensors": {"counter": {"file": "artifacts.npz", "key": "counter"}, "atomic_counter": {"file": "artifacts.npz", "key": "atomic_counter"}, "lock": {"file": "artifacts.npz", "key": "lock"}}}

@@ -1,0 +1,9 @@
+{
+ "tensors": {
+  "y": {
+   "file": "gt_tensors.npz",
+   "key": "y"
+  }
+ },
+ "notes": "8x8 tridiagonal BSR (diag 3, off -1) matvec with ones -> [2,1,...,1,2]"
+}

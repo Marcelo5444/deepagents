@@ -1,0 +1,21 @@
+{
+ "tensors": {
+  "A": {
+   "file": "gt_tensors.npz",
+   "key": "A"
+  },
+  "X": {
+   "file": "gt_tensors.npz",
+   "key": "X"
+  },
+  "L": {
+   "file": "gt_tensors.npz",
+   "key": "L"
+  },
+  "Y": {
+   "file": "gt_tensors.npz",
+   "key": "Y"
+  }
+ },
+ "notes": "tile cholesky example_tile_cholesky, SPD from seed 7, TILE=32"
+}

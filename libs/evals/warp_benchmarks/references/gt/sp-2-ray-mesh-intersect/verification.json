@@ -1,0 +1,13 @@
+{
+ "tensors": {
+  "origins": {
+   "file": "gt_tensors.npz",
+   "key": "origins"
+  },
+  "hits": {
+   "file": "gt_tensors.npz",
+   "key": "hits"
+  }
+ },
+ "notes": "single-triangle raycast: [0.25,0.25,1] dir -z hits at t=1.0; opposite origin misses"
+}

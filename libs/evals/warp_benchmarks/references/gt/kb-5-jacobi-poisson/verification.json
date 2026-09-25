@@ -1,0 +1,13 @@
+{
+ "tensors": {
+  "u_final": {
+   "file": "gt_tensors.npz",
+   "key": "u_final"
+  },
+  "source": {
+   "file": "gt_tensors.npz",
+   "key": "source"
+  }
+ },
+ "notes": "1D Poisson Jacobi, 0.25* update (=-4 diag), 20000 sweeps, sin source"
+}

@@ -1,0 +1,13 @@
+{
+ "tensors": {
+  "positions_initial": {
+   "file": "gt_tensors.npz",
+   "key": "positions_initial"
+  },
+  "positions_final": {
+   "file": "gt_tensors.npz",
+   "key": "positions_final"
+  }
+ },
+ "notes": "tile n-body example_tile_nbody, 128 bodies, 1 step, DT=0.016, seed 42"
+}

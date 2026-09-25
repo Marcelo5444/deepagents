@@ -1,0 +1,9 @@
+{
+ "tensors": {
+  "reference": {
+   "file": "gt_tensors.npz",
+   "key": "reference"
+  }
+ },
+ "notes": "1D tid decomposition (tid%W, tid//W) must equal 2D (i,j) launch mapping"
+}

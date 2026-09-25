@@ -1,0 +1,13 @@
+{
+ "tensors": {
+  "x": {
+   "file": "gt_tensors.npz",
+   "key": "x"
+  },
+  "y": {
+   "file": "gt_tensors.npz",
+   "key": "y"
+  }
+ },
+ "notes": "tile fft+ifft roundtrip of ones vector -> identical to input"
+}

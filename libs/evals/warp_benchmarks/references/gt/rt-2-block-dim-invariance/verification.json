@@ -1,0 +1,13 @@
+{
+ "tensors": {
+  "input": {
+   "file": "gt_tensors.npz",
+   "key": "input"
+  },
+  "sums": {
+   "file": "gt_tensors.npz",
+   "key": "sums"
+  }
+ },
+ "notes": "sum of (4,5,6) array invariant across block_dim 32/64/128/256"
+}

@@ -1,0 +1,13 @@
+{
+ "tensors": {
+  "maxima": {
+   "file": "gt_tensors.npz",
+   "key": "maxima"
+  },
+  "field_final": {
+   "file": "gt_tensors.npz",
+   "key": "field_final"
+  }
+ },
+ "notes": "damped 2D wave, impulse at center, 100 steps, dt=0.5 k_damp=0.02; maxima decays"
+}

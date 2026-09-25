@@ -1,0 +1,13 @@
+{
+ "tensors": {
+  "keys": {
+   "file": "gt_tensors.npz",
+   "key": "keys"
+  },
+  "values": {
+   "file": "gt_tensors.npz",
+   "key": "values"
+  }
+ },
+ "notes": "sorted keys [1,2,3,5,8,9] with consistently permuted values"
+}

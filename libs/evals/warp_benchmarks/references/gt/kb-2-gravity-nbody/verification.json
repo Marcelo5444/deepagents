@@ -1,0 +1,13 @@
+{
+ "tensors": {
+  "positions_initial": {
+   "file": "gt_tensors.npz",
+   "key": "positions_initial"
+  },
+  "positions_final": {
+   "file": "gt_tensors.npz",
+   "key": "positions_final"
+  }
+ },
+ "notes": "README quick-start gravity, seed 42, dt=0.01, 50 in-place steps"
+}

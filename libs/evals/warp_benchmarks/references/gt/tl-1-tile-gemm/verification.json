@@ -1,0 +1,17 @@
+{
+ "tensors": {
+  "A": {
+   "file": "gt_tensors.npz",
+   "key": "A"
+  },
+  "B": {
+   "file": "gt_tensors.npz",
+   "key": "B"
+  },
+  "C": {
+   "file": "gt_tensors.npz",
+   "key": "C"
+  }
+ },
+ "notes": "tile GEMM example_tile_matmul, M=56 K=48 N=20, seed 42"
+}

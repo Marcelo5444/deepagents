@@ -1,0 +1,13 @@
+{
+ "tensors": {
+  "grad": {
+   "file": "gt_tensors.npz",
+   "key": "grad"
+  },
+  "trajectory": {
+   "file": "gt_tensors.npz",
+   "key": "trajectory"
+  }
+ },
+ "notes": "20 decay steps k=2 dt=0.1; grad d(x_n^2)/dx0 = 2*((1-k*dt)^n)^2"
+}

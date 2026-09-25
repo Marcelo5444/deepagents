@@ -1,0 +1,21 @@
+{
+ "tensors": {
+  "src_f32": {
+   "file": "gt_tensors.npz",
+   "key": "src_f32"
+  },
+  "src_f64": {
+   "file": "gt_tensors.npz",
+   "key": "src_f64"
+  },
+  "src_i32": {
+   "file": "gt_tensors.npz",
+   "key": "src_i32"
+  },
+  "matrix_2d": {
+   "file": "gt_tensors.npz",
+   "key": "matrix_2d"
+  }
+ },
+ "notes": "seed-0 arrays that must round-trip through wp.array exactly"
+}

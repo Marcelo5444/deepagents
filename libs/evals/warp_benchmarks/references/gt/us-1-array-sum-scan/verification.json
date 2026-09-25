@@ -1,0 +1,17 @@
+{
+ "tensors": {
+  "vals": {
+   "file": "gt_tensors.npz",
+   "key": "vals"
+  },
+  "inclusive": {
+   "file": "gt_tensors.npz",
+   "key": "inclusive"
+  },
+  "exclusive": {
+   "file": "gt_tensors.npz",
+   "key": "exclusive"
+  }
+ },
+ "notes": "array_sum=21; inclusive cumsum; exclusive scan (prefix[0]=0)"
+}

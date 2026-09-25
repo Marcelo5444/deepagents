@@ -1,0 +1,9 @@
+{
+ "tensors": {
+  "positions_final": {
+   "file": "gt_tensors.npz",
+   "key": "positions_final"
+  }
+ },
+ "notes": "semi-implicit Euler under gravity, dt=0.1, 10 steps, analytic y=-4.3955"
+}

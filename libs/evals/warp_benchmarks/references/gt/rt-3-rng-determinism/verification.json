@@ -1,0 +1,13 @@
+{
+ "tensors": {
+  "stream_seed42": {
+   "file": "gt_tensors.npz",
+   "key": "stream_seed42"
+  },
+  "stream_seed43": {
+   "file": "gt_tensors.npz",
+   "key": "stream_seed43"
+  }
+ },
+ "notes": "randf stream for seed 42 (deterministic) and seed 43 (must differ)"
+}

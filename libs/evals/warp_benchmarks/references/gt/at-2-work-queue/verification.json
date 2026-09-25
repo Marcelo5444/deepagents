@@ -1,0 +1,13 @@
+{
+ "tensors": {
+  "results": {
+   "file": "gt_tensors.npz",
+   "key": "results"
+  },
+  "dequeued_sorted": {
+   "file": "gt_tensors.npz",
+   "key": "dequeued_sorted"
+  }
+ },
+ "notes": "10 producers/consumers: items 0..9 each dequeued exactly once"
+}

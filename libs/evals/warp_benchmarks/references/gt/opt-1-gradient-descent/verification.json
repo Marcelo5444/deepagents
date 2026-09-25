@@ -1,0 +1,9 @@
+{
+ "tensors": {
+  "trajectory": {
+   "file": "gt_tensors.npz",
+   "key": "trajectory"
+  }
+ },
+ "notes": "SGD on (x-2)^2 with warp-Tape grads, lr=0.1, 100 iters -> x=2"
+}

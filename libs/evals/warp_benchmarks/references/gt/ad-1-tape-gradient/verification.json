@@ -1,0 +1,13 @@
+{
+ "tensors": {
+  "grad": {
+   "file": "gt_tensors.npz",
+   "key": "grad"
+  },
+  "y": {
+   "file": "gt_tensors.npz",
+   "key": "y"
+  }
+ },
+ "notes": "d/dx of sum(3x + sin x) at [1,2,3] = 3+cos(x)"
+}

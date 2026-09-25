@@ -1,0 +1,13 @@
+{
+ "tensors": {
+  "points": {
+   "file": "gt_tensors.npz",
+   "key": "points"
+  },
+  "lengths": {
+   "file": "gt_tensors.npz",
+   "key": "lengths"
+  }
+ },
+ "notes": "docs basic example: wp.length of 1024 seeded random vec3s"
+}

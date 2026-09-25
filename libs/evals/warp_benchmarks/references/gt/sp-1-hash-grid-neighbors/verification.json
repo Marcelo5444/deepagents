@@ -1,0 +1,13 @@
+{
+ "tensors": {
+  "points": {
+   "file": "gt_tensors.npz",
+   "key": "points"
+  },
+  "counts": {
+   "file": "gt_tensors.npz",
+   "key": "counts"
+  }
+ },
+ "notes": "hash grid neighbor counts, 500 pts seed 42, radius 1.5, cell 4.0"
+}
