@@ -58,7 +58,7 @@ WARP_TASKS: list[WarpTask] = [
         id="kb-1-basic-length-kernel",
         skill="warp",
         prompt="""Using NVIDIA Warp (CPU device only), write `solution.py` that:
-1. Creates 1024 random 3D points (numpy, seed 42, uniform [0,1)) as a wp.array of wp.vec3 on device "cpu".
+1. Creates 1024 random 3D points (numpy default_rng(42), uniform [0,1): rng = np.random.default_rng(42); pts = rng.random((1024,3))) as a wp.array of wp.vec3 on device "cpu".
 2. Writes a @wp.kernel that computes each point's Euclidean length into a wp.array[float], using wp.length().
 3. Launches it with wp.launch(dim=1024) and reads the result back with .numpy().
 4. Verifies against numpy: np.linalg.norm(points, axis=1) with atol=1e-5.
@@ -100,7 +100,7 @@ import numpy as np
 2. Instantiates it with dt=0.1, gravity=wp.vec3(0.0, -9.81, 0.0), damping=0.99.
 3. Writes an @wp.kernel integrate(params, pos: wp.array[wp.vec3], vel: wp.array[wp.vec3]) that does
    semi-implicit Euler: vel += gravity*dt first, then pos += vel*dt (velocity updated BEFORE position).
-4. Launches it 10 times for 4 particles that start at rest at the origin (pos=0, vel=0).
+4. Launches it 10 times for 4 particles at the origin with initial velocity wp.vec3(0.0, 1.0, 0.0) (pos=0, vel=(0,1,0)).
 5. Saves final positions to `positions.npz` key positions_final + verification.json tensors spec
    {"tensors": {"positions_final": {"file": "positions.npz", "key": "positions_final"}}}.
 The analytic final y for semi-implicit Euler: y = dt^2 * sum_{k=1..10} (-9.81*k) = -4.3955.
