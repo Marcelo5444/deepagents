@@ -1,0 +1,187 @@
+[
+  {
+    "id": "d01_weather_models_menu",
+    "question": "I have weather data on a lat-lon grid (a sphere). What PhysicsNeMo model families fit? Give me a menu of at least two distinct families and cite the example directory for each.",
+    "answer": "PhysicsNeMo provides several model families for global weather on a lat-lon sphere; valid options include GraphCast (graph-based on icosahedral mesh, examples/weather/graphcast/), SFNO (Spherical Fourier Neural Operator, examples/weather/fcn_sfno/), Pangu-Weather, and StormCast / generative weather under examples/weather/. A correct answer enumerates AT LEAST two distinct families and cites a real path under examples/weather/ for each. Listing more is good but not required for full credit.",
+    "expected_behavior": [
+      "Names at least two distinct families that handle lat-lon / spherical data.",
+      "Cites a real path under examples/weather/ for each family named.",
+      "Frames the answer as a menu, not a single pick."
+    ]
+  },
+  {
+    "id": "d02_external_aero_axes",
+    "question": "For external automotive aerodynamics on irregular surface meshes, enumerate the model families and the datapipe options separately, then point at one reference example.",
+    "answer": "Model families include DoMINO (attention on point clouds/surface meshes), AeroGraphNet/MeshGraphNet (graph neural networks), Transolver and GeoTransolver (physics-attention transformers), and XAeroNet (scalable external-aero). Datapipes are orthogonal \u2014 AhmedML, DrivAerML, DrivAerNet, MeshDataPipe, and DoMINO/Transolver datapipes under physicsnemo/datapipes/. A correct answer treats model and datapipe as ORTHOGONAL axes (mentions both), names \u22652 model families AND \u22651 datapipe (by name OR module path \u2014 exact path is preferred but not required if the datapipe is correctly named), and cites a reference example under examples/cfd/external_aerodynamics/.",
+    "expected_behavior": [
+      "Treats model family and datapipe as orthogonal axes.",
+      "Lists at least two model families AND at least one datapipe path.",
+      "Cites a real path under examples/cfd/external_aerodynamics/."
+    ]
+  },
+  {
+    "id": "d03_geotransolver_path",
+    "question": "Where exactly is the GeoTransolver model implemented in PhysicsNeMo? Give the module path and flag any caveats.",
+    "answer": "GeoTransolver lives at physicsnemo/experimental/models/geotransolver/geotransolver.py. Because it is under experimental/, the API may change. The answer must cite the verified path and flag the experimental-status caveat.",
+    "expected_behavior": [
+      "Cites a path under physicsnemo/experimental/models/geotransolver/.",
+      "Flags that experimental/ APIs may change.",
+      "Does not invent sibling paths it did not verify."
+    ]
+  },
+  {
+    "id": "d04_domino_class_and_path",
+    "question": "What is the actual class name and module path of the DoMINO model in PhysicsNeMo? Cite the source file.",
+    "answer": "DoMINO's model implementation is the DoMINO class under physicsnemo/models/domino/ (e.g., physicsnemo/models/domino/model.py). A reference training example lives at examples/cfd/external_aerodynamics/domino/. The answer must cite the actual class name from source plus the module path, not guess from the model's marketing name.",
+    "expected_behavior": [
+      "Cites a real path under physicsnemo/models/domino/.",
+      "Names the actual exported class (DoMINO) from source.",
+      "References examples/cfd/external_aerodynamics/domino/."
+    ]
+  },
+  {
+    "id": "d05_diffusion_corrdiff",
+    "question": "I want to do generative downscaling of low-resolution weather forecasts using diffusion. What does PhysicsNeMo offer? Cite the example directory and the model module.",
+    "answer": "PhysicsNeMo includes CorrDiff (correction-diffusion) for generative weather/climate downscaling. The reference example lives under examples/weather/diffusions/corrdiff/ (or examples/generative/corrdiff/), with the model under physicsnemo/models/diffusion/. A correct answer names CorrDiff explicitly AND cites at least ONE real path (either the example dir OR the model module). Citing both is preferred but not required for full credit.",
+    "expected_behavior": [
+      "Names CorrDiff (or the equivalent diffusion-downscaling solution) explicitly.",
+      "Cites a real example directory under examples/.",
+      "Cites a real model module path under physicsnemo/models/."
+    ]
+  },
+  {
+    "id": "d06_pino_fno_menu",
+    "question": "What neural operator families does PhysicsNeMo provide for learning solution operators on regular grids (e.g., 2D/3D PDE surrogates)? List the families and cite implementation paths.",
+    "answer": "Neural operator families on regular grids include FNO (Fourier Neural Operator), AFNO (Adaptive FNO), and PINO (Physics-Informed Neural Operator). Implementations live under physicsnemo/models/fno/, physicsnemo/models/afno/, and the operator/PINO formulations. The answer must enumerate at least two distinct operator families and cite real model module paths.",
+    "expected_behavior": [
+      "Names at least two distinct neural operator families (e.g., FNO, AFNO, PINO).",
+      "Cites real module paths under physicsnemo/models/.",
+      "Frames the answer as a menu of operator families."
+    ]
+  },
+  {
+    "id": "o01_unstructured_mesh_onboarding",
+    "question": "I have unstructured tetrahedral mesh data with per-vertex velocity targets, on irregular geometry. Which model families and datapipes should I evaluate, what data shape do the example datapipes expect, and which example should I fork as a starting point?",
+    "answer": "For per-vertex targets on irregular meshes, candidate model families are MeshGraphNet (GNN), Transolver / GeoTransolver (physics-attention transformers), and DoMINO (attention on points/surfaces). Their datapipes typically expect tuples of (point coordinates, per-point input features, per-point targets). A correct answer names \u22652 appropriate families, describes the per-point data contract, and cites a real example to fork. Trade-off discussion (GNN locality vs attention global context) is preferred but not required for full credit.",
+    "expected_behavior": [
+      "Names at least two appropriate families with explicit trade-offs (e.g., GNN locality vs attention global context).",
+      "Describes the per-point / per-vertex data contract (coords + features + targets).",
+      "Cites a real example directory to fork (under examples/cfd/external_aerodynamics/ or examples/cfd/)."
+    ]
+  },
+  {
+    "id": "o02_climate_downscaling_onboarding",
+    "question": "I want to build a regional climate downscaling surrogate from low-res ERA5 reanalysis to high-res HRRR-like fields. Which PhysicsNeMo paths should I look at for the model and the data contract? Give a menu of approaches.",
+    "answer": "Candidate approaches include CorrDiff (generative diffusion-based downscaling) and deterministic SFNO/FCN-style super-resolution. ERA5 datapipes live under physicsnemo/datapipes/climate/ (or similar). A correct answer enumerates AT LEAST two DIVERSE approaches (i.e., not two diffusion variants \u2014 diversity across architectural families is the bar) and cites a real example or datapipe path under examples/weather/ or physicsnemo/datapipes/. The stochastic-vs-deterministic framing is preferred but not required for full credit.",
+    "expected_behavior": [
+      "Names at least two approaches with explicit trade-off (stochastic/diffusion vs deterministic).",
+      "Cites a real datapipe path for ERA5 / climate data under physicsnemo/datapipes/.",
+      "Cites a real example directory under examples/weather/."
+    ]
+  },
+  {
+    "id": "o03_pinn_onboarding",
+    "question": "I want to build a physics-informed surrogate for a PDE on a known geometry (no labeled data, just the PDE residual). Where should I look in PhysicsNeMo? Cite the relevant module/example and explain what I subclass.",
+    "answer": "Physics-informed / PDE-residual training in the PhysicsNeMo ecosystem is primarily covered by the PhysicsNeMo Sym sub-project (formerly Modulus Sym). Within PhysicsNeMo proper, see PINO (physics-informed neural operator) examples and the operators/equations modules. The answer should point to either physicsnemo-sym (with appropriate caveat that it's a separate sub-project) or to PINO examples within physicsnemo, and identify the base class to subclass for a PDE residual loss.",
+    "expected_behavior": [
+      "Identifies the right sub-project (physicsnemo-sym for PINNs, or PINO within physicsnemo).",
+      "Cites a real example or module path.",
+      "Explains what the user subclasses or implements (PDE residual / loss term)."
+    ]
+  },
+  {
+    "id": "a01_abstain_rl_molecular",
+    "question": "I want to do reinforcement learning for molecular design / drug discovery in PhysicsNeMo. Where should I start?",
+    "answer": "PhysicsNeMo targets SciML / AI4Science surrogate modeling and does not directly support reinforcement learning or molecular/drug-design generation. A correct answer (a) plainly states PhysicsNeMo is the wrong tool AND (b) names a concrete better-fitting framework (e.g. NVIDIA BioNeMo for molecular ML, Stable-Baselines3 / TorchRL for RL). It must NOT propose unrelated PhysicsNeMo examples (e.g., active_learning/) as a fit. NOTE: if the agent provides additional context about what PhysicsNeMo *does* offer (PINN, surrogates, etc.) AFTER the clear refusal, that is informational not deflective and should NOT be penalised.",
+    "expected_behavior": [
+      "Explicitly states PhysicsNeMo does not directly support RL / molecular design.",
+      "Names a concrete better-fitting framework (e.g., BioNeMo, Stable-Baselines3, TorchRL).",
+      "Does NOT cite a PhysicsNeMo example as the answer."
+    ]
+  },
+  {
+    "id": "a02_abstain_bert_nlp",
+    "question": "How do I fine-tune a BERT model for sentiment classification using PhysicsNeMo? Which framework should I use?",
+    "answer": "BERT sentiment classification is general NLP, outside PhysicsNeMo's SciML/AI4Science scope. A correct answer (a) plainly states PhysicsNeMo is the wrong tool AND (b) names a concrete NLP framework (Hugging Face Transformers or NVIDIA NeMo). NOTE: if the agent adds context after the refusal explaining what PhysicsNeMo *does* cover, that is informational and should NOT be penalised.",
+    "expected_behavior": [
+      "Recognizes this is outside PhysicsNeMo's SciML scope.",
+      "Names a concrete NLP framework (Hugging Face Transformers or NVIDIA NeMo).",
+      "Does NOT cite a PhysicsNeMo example as the answer."
+    ]
+  },
+  {
+    "id": "a03_abstain_symbolic_regression",
+    "question": "I want to use PhysicsNeMo to do symbolic regression \u2014 discover a closed-form equation that fits my dataset. Which model do I use?",
+    "answer": "Symbolic regression (discovering closed-form equations) is outside PhysicsNeMo's surrogate-modeling scope. A correct answer (a) plainly states PhysicsNeMo is the wrong tool AND (b) names a concrete symbolic-regression tool (e.g. PySR, gplearn, AI Feynman). NOTE: if the agent then explains what PhysicsNeMo *does* offer (PINNs for inverse problems with known PDE structure, etc.), that is informational and should NOT be penalised. The refusal + alternative-tool naming is what counts.",
+    "expected_behavior": [
+      "Explicitly states symbolic regression is outside PhysicsNeMo's scope.",
+      "Names a concrete symbolic-regression tool (e.g., PySR, gplearn, AI Feynman).",
+      "Does NOT cite a PhysicsNeMo model/example as the answer."
+    ]
+  },
+  {
+    "id": "m02_weather_e2e",
+    "question": "I have ERA5 reanalysis data and want to build a weather forecasting surrogate end-to-end with PhysicsNeMo: (1) data preparation (ERA5 datapipe), (2) model training (pick GraphCast or SFNO), and (3) rollout / inference. Walk me through what to use for each step with real paths, and explain how the stages connect.",
+    "answer": "A correct answer covers data prep (an ERA5 / climate datapipe path under physicsnemo/datapipes/climate/ or similar), training (cite GraphCast under examples/weather/graphcast/ OR SFNO under examples/weather/fcn_sfno/ \u2014 pick one and cite its real example dir), and rollout / inference (the example's inference / rollout script). The answer must thread the three stages \u2014 what the datapipe outputs, what the trainer consumes, what inference takes as a checkpoint.",
+    "expected_behavior": [
+      "Covers all three stages: data_prep, training, inference.",
+      "Cites a real ERA5 / climate datapipe path under physicsnemo/datapipes/.",
+      "Cites a real example directory under examples/weather/ for training (GraphCast or SFNO).",
+      "Threads the stages (datapipe output -> training input -> inference checkpoint)."
+    ]
+  },
+  {
+    "id": "c01_fno_hello_world",
+    "question": "Use the code_execution tool to instantiate physicsnemo.models.fno.FNO for a 2D PDE surrogate with in_channels=3, out_channels=2, latent_channels=32, num_fno_layers=4, num_fno_modes=12, dimension=2, then run a forward pass on torch.randn(8, 3, 64, 64) and report the output shape.",
+    "answer": "Executing the snippet builds a 2D FNO mapping (B=8, C=3, H=64, W=64) -> (B=8, C=2, H=64, W=64). The agent should actually run the snippet via code_execution (not just describe it) and report output.shape as torch.Size([8, 2, 64, 64]).",
+    "expected_behavior": [
+      "Uses code_execution to run the snippet (not just describes it).",
+      "Imports physicsnemo.models.fno.FNO with the correct argument names (notably num_fno_modes, not num_modes).",
+      "Reports torch.Size([8, 2, 64, 64]) as the output shape."
+    ]
+  },
+  {
+    "id": "c02_meshgraphnet_random_graph",
+    "question": "Use code_execution to: (1) build a small MeshGraphNet from physicsnemo.models.meshgraphnet with input_dim_nodes=4, input_dim_edges=2, output_dim=3 (and other defaults), (2) generate a random DGL graph with 100 nodes and 300 edges, (3) attach random node features (shape [100, 4]) and edge features (shape [300, 2]), (4) run a forward pass, and (5) report the output node-feature tensor shape.",
+    "answer": "A correct execution produces an output tensor of shape torch.Size([100, 3]) \u2014 one row per node, three predicted features. The agent must actually run the code via code_execution and report that shape.",
+    "expected_behavior": [
+      "Uses code_execution to run the snippet end-to-end.",
+      "Correctly imports MeshGraphNet from physicsnemo.models.meshgraphnet with the right kwarg names.",
+      "Builds a DGL graph with dgl.rand_graph (or equivalent) and attaches features as ndata / edata.",
+      "Reports torch.Size([100, 3]) as the output."
+    ]
+  },
+  {
+    "id": "c03_domino_model_build",
+    "question": "Use code_execution to construct a DoMINO model from physicsnemo.models.domino with a minimal external-aerodynamics config (surface-only output mode). Use small dimensions to keep the test fast. Run a forward pass on a synthetic point cloud and report the output tensor shape(s) along with whatever auxiliary outputs DoMINO returns.",
+    "answer": "A correct answer constructs DoMINO with appropriate args (Hydra-style config object or matching dict-config), runs a forward pass via code_execution, and reports actual output shapes / dict keys DoMINO returns. Demonstrating awareness of the actual constructor signature is required; if the construction succeeds and the forward pass runs to completion, that's the proof. Score should drop only when the model fails to construct, the forward pass fails, or the reported output is fabricated rather than printed by the executed code.",
+    "expected_behavior": [
+      "Retrieves physicsnemo.models.domino source first to discover the real constructor signature.",
+      "Uses code_execution to actually build and forward-run the model.",
+      "Reports the actual output shapes / keys (does not fabricate output shapes).",
+      "If construction is non-trivial, the agent admits and explains rather than hallucinating a wrong API."
+    ]
+  },
+  {
+    "id": "c04_custom_curator_source",
+    "question": "Write a complete CustomMeshSource class that subclasses physicsnemo_curator's Source base class. The class should yield records of shape {\"vertices\": np.ndarray (N,3), \"fields\": np.ndarray (N, num_fields), \"metadata\": dict} from a directory of .npz files (one file per simulation run, with arrays named 'vertices' and 'fields'). Use code_execution to (1) write the class to a Python file, (2) create a tiny .npz fixture in /tmp, (3) import and iterate the source, and (4) print the first record's vertices.shape and metadata.",
+    "answer": "A correct answer retrieves the Curator source-base implementation first to discover the real abstract methods to override, writes a runnable subclass that satisfies that contract, creates a tiny .npz fixture, iterates the source via code_execution, and prints a real per-record output. The class must not invent methods that don't exist on the base.",
+    "expected_behavior": [
+      "Retrieves physicsnemo-curator source code first to find the real Source base class and its abstract methods.",
+      "Writes a CustomMeshSource subclass that overrides those methods correctly.",
+      "Uses code_execution to create the fixture and iterate the source successfully.",
+      "Prints a real per-record output (vertices.shape and metadata) demonstrating the source works."
+    ]
+  },
+  {
+    "id": "c05_minimal_training_loop",
+    "question": "Use code_execution to write and run a minimal 3-step training loop: (1) instantiate physicsnemo.distributed.DistributedManager (single-GPU init is fine), (2) build a small physicsnemo.models.fno.FNO, (3) loop 3 times: random batch, forward, MSE loss, backward, optimizer.step(), (4) print the 3 loss values. Use real PhysicsNeMo APIs.",
+    "answer": "A correct execution prints 3 finite loss values that generally decrease (or at least all finite, not NaN). The agent must use the real DistributedManager.initialize() entry point (not invented), build a real FNO with correct kwargs, and run a working training loop end-to-end via code_execution.",
+    "expected_behavior": [
+      "Uses code_execution to actually run the training loop.",
+      "Imports physicsnemo.distributed.DistributedManager correctly and calls .initialize() before any model build.",
+      "Uses real FNO kwargs (num_fno_modes, num_fno_layers, latent_channels, dimension).",
+      "Prints 3 finite loss values from 3 distinct training steps."
+    ]
+  }
+]

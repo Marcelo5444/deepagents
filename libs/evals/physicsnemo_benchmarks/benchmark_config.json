@@ -1,0 +1,12 @@
+{
+  "name": "physicsnemo_benchmarks",
+  "version": "1.0.0",
+  "description": "PhysicsNeMo agentic evals (18 items) with LLM judge",
+  "task_count": 18,
+  "skills": ["physicsnemo"],
+  "categories": ["physicsnemo_qa", "physicsnemo_code", "physicsnemo_multi"],
+  "judge_model": "nvidia:nvidia/nvidia/nemotron-3-super-v3",
+  "site_packages_env": "PHYSICSNEMO_SITE_PACKAGES",
+  "repo_env": "PHYSICSNEMO_REPO"
+}
+
