@@ -1,70 +1,70 @@
-import torch
+# solution.py — dy-1-nve-conservation (updated for nvalchemi-toolkit 0.2.0 API)
+# Pattern follows examples/basic/04_nve_energy_conservation.py: neighbor hooks
+# are REQUIRED on the dynamics object, velocities are a node property.
 import json
-from nvalchemi.models.lj import LennardJonesModelWrapper
-from nvalchemi.dynamics import NVE
+
+import numpy as np
+import torch
+
 from nvalchemi.data import AtomicData, Batch
+from nvalchemi.dynamics import NVE
+from nvalchemi.dynamics.base import DynamicsStage
+from nvalchemi.hooks import WrapPeriodicHook
+from nvalchemi.models.lj import LennardJonesModelWrapper
 
-# Set up positions for 8-atom simple cubic argon (2x2x2 lattice)
-positions = torch.tensor([
-    [0.0, 0.0, 0.0],
-    [0.0, 0.0, 5.0],
-    [0.0, 5.0, 0.0],
-    [0.0, 5.0, 5.0],
-    [5.0, 0.0, 0.0],
-    [5.0, 0.0, 5.0],
-    [5.0, 5.0, 0.0],
-    [5.0, 5.0, 5.0]
-])
+torch.manual_seed(42)
 
-# Simulation cell (cubic box of length 10.0) - needs batch dimension [1, 3, 3]
-cell = torch.eye(3).unsqueeze(0) * 10.0
+LJ_EPSILON = 0.0104  # eV
+LJ_SIGMA = 3.40  # A
+LJ_CUTOFF = 8.5  # A
 
-# Atomic numbers (argon = 18)
-z = torch.full((8,), 18, dtype=torch.long)
+# Periodic simple-cubic argon crystal (2x2x2 = 8 atoms) at LJ equilibrium spacing
+spacing = 2 ** (1 / 6) * LJ_SIGMA
+coords = torch.arange(2, dtype=torch.float32) * spacing
+gx, gy, gz = torch.meshgrid(coords, coords, coords, indexing="ij")
+positions = torch.stack([gx.flatten(), gy.flatten(), gz.flatten()], dim=-1)
+n_atoms = positions.shape[0]
 
-# Masses (set to 1.0 for all atoms in reduced units)
-masses = torch.ones(8)
+# Small Maxwell-Boltzmann-scale velocities, zero center-of-mass drift
+velocities = torch.randn(n_atoms, 3) * 0.001
+velocities -= velocities.mean(dim=0, keepdim=True)
 
-# Small random velocity perturbation
-velocities = torch.randn_like(positions) * 0.01
-
-# Create Lennard-Jones model for argon
-model = LennardJonesModelWrapper(epsilon=1.0, sigma=3.4, cutoff=10.0)
-
-# Create batch for NVE
 data = AtomicData(
     positions=positions,
-    atomic_numbers=z,
-    cell=torch.eye(3).unsqueeze(0) * 10.0,
-    energy=torch.randn(1, 1),
-    forces=torch.zeros_like(positions),
-    pbc=torch.tensor([[True, True, True]], dtype=torch.bool)
+    atomic_numbers=torch.full((n_atoms,), 18, dtype=torch.long),
+    forces=torch.zeros(n_atoms, 3),
+    energy=torch.zeros(1, 1),
+    cell=torch.eye(3).unsqueeze(0) * (2 * spacing),
+    pbc=torch.tensor([[True, True, True]]),
 )
+data.add_node_property("velocities", velocities)
 batch = Batch.from_data_list([data])
 
-# Initialize NVE dynamics
-dyn = NVE(model=model, dt=0.5)
+model = LennardJonesModelWrapper(epsilon=LJ_EPSILON, sigma=LJ_SIGMA, cutoff=LJ_CUTOFF)
+nve = NVE(model=model, dt=1.0, n_steps=200)
+for hook in model.make_neighbor_hooks():
+    nve.register_hook(hook, stage=DynamicsStage.BEFORE_COMPUTE)
+nve.register_hook(WrapPeriodicHook(stage=DynamicsStage.AFTER_POST_UPDATE))
 
-# Get initial total energy
-e_start = dyn.total_energy(batch)
+# Integrate 200 NVE steps; compute() writes the per-step energy back to batch
+energies = []
+for _ in range(200):
+    batch, _aux = nve.step(batch)
+    energies.append(float(batch.energy.flatten()[-1]))
 
-# Run NVE for 200 steps
-batch = dyn.run(batch, n_steps=200)
+e = np.asarray(energies, dtype=float)
+rel_drift = float(abs(e[-1] - e[0]) / (abs(e[0]) + 1e-12))
 
-# Get final total energy
-e_end = dyn.total_energy(batch)
+# TENSOR ARTIFACTS contract: full per-step energy trace, reloaded by the grader
+np.savez("energies.npz", energies=e)
+with open("verification.json", "w") as f:
+    json.dump({"tensors": {"energies": {"file": "energies.npz", "key": "energies"}}}, f)
 
-# Compute relative energy drift
-rel_drift = torch.abs(e_end - e_start) / torch.abs(e_start)
-
-# Prepare results
 result = {
-    "e_start": e_start.item(),
-    "e_end": e_end.item(),
-    "rel_drift": rel_drift.item(),
-    "steps": 200
+    "e_start": float(e[0]),
+    "e_end": float(e[-1]),
+    "rel_drift": rel_drift,
+    "steps": 200,
 }
-
-# Write result.json
 with open("result.json", "w") as f:
     json.dump(result, f)

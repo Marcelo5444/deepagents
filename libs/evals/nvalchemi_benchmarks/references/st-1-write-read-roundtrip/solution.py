@@ -48,7 +48,7 @@ def main():
     # 2. Read them back with AtomicDataZarrReader
     # -------------------------------------------------
     reader = AtomicDataZarrReader("data.zarr")
-    read_systems = [reader[i] for i in range(len(reader))]
+    read_systems = [reader.read(i)[0] for i in range(len(reader))]
     reader.close()
 
     # -------------------------------------------------
@@ -59,7 +59,7 @@ def main():
 
     # Check that the first system's positions round‑trip exactly (within default tolerance)
     positions_roundtrip_ok = torch.allclose(
-        systems[0].positions, read_systems[0].positions
+        systems[0].positions, read_systems[0]["positions"]
     )
 
     # -------------------------------------------------

@@ -1,83 +1,48 @@
-# solution.py
+# solution.py — st-2-append-delete-defrag (updated for nvalchemi-toolkit 0.2.0 API)
 import json
+import shutil
 import torch
 from nvalchemi.data import AtomicData, AtomicDataZarrWriter, AtomicDataZarrReader
 
+
 def _random_system(num_atoms: int = 5) -> AtomicData:
-    """Create a dummy AtomicData with random positions and atomic numbers."""
-    positions = torch.randn(num_atoms, 3)          # (N, 3)
-    atomic_numbers = torch.randint(1, 10, (num_atoms,))  # (N,)  - elements 1‑9
-    # Assuming AtomicData accepts `pos` and `z` as keyword arguments.
-    return AtomicData(pos=positions, z=atomic_numbers)
+    positions = torch.randn(num_atoms, 3)
+    atomic_numbers = torch.randint(1, 10, (num_atoms,))
+    return AtomicData(
+        positions=positions,
+        atomic_numbers=atomic_numbers,
+        energy=torch.randn(1, 1),
+    )
 
 
 def main() -> None:
     store_path = "store.zarr"
+    shutil.rmtree(store_path, ignore_errors=True)
 
-    # ------------------------------------------------------------------
-    # 1. Write 6 random systems (create new store)
-    # ------------------------------------------------------------------
-    writer = AtomicDataZarrWriter(store_path, mode="w")
-    for _ in range(6):
-        writer.write(_random_system())
+    # 1. Write 6 random systems (bulk write creates the store)
+    writer = AtomicDataZarrWriter(store_path)
+    writer.write([_random_system() for _ in range(6)])
 
-    # ------------------------------------------------------------------
     # 2. Append 2 more systems
-    # ------------------------------------------------------------------
-    for _ in range(2):
-        writer.append(_random_system())   # append mode
+    writer.append(_random_system())
+    writer.append(_random_system())
+    after_append = 8  # 6 + 2
 
-    # Number of samples after the append step (before any deletion)
-    after_append = 8   # 6 + 2
+    # 3. Delete samples 0 and 3
+    writer.delete([0, 3])
 
-    # ------------------------------------------------------------------
-    # 3. Soft‑delete samples 0 and 3 (if the API supports it)
-    # ------------------------------------------------------------------
-    if hasattr(writer, "soft_delete"):
-        writer.soft_delete([0, 3])
-    elif hasattr(writer, "delete_samples"):
-        writer.delete_samples([0, 3])
-    # If neither method exists we simply skip – the test environment
-    # is expected to provide one of them.
-
-    # ------------------------------------------------------------------
     # 4. Defragment the store
-    # ------------------------------------------------------------------
-    if hasattr(writer, "defragment"):
-        writer.defragment()
-    # Some implementations expose defragmentation on the underlying store;
-    # if the writer does not have it we try the store attribute.
-    elif hasattr(writer, "store") and hasattr(writer.store, "defragment"):
-        writer.store.defragment()
+    writer.defragment()
 
-    writer.close()
-
-    # ------------------------------------------------------------------
-    # 5. Re‑open with a reader and count active samples
-    # ------------------------------------------------------------------
+    # 5. Re-open with a reader and count active samples
     reader = AtomicDataZarrReader(store_path)
-    # Try common ways to obtain the number of active (non‑deleted) samples.
-    if hasattr(reader, "get_num_active_samples"):
-        active = reader.get_num_active_samples()
-    elif hasattr(reader, "num_active_samples"):
-        active = reader.num_active_samples
-    elif hasattr(reader, "num_samples"):
-        # Some readers report total samples; we assume soft‑deleted ones are excluded.
-        active = reader.num_samples
-    elif hasattr(reader, "__len__"):
-        active = len(reader)
-    else:
-        # Fallback: iterate and count (assuming reader is iterable over samples)
-        active = sum(1 for _ in reader)
-
+    after_defrag = len(reader)
     reader.close()
 
-    # ------------------------------------------------------------------
     # 6. Write result.json
-    # ------------------------------------------------------------------
     result = {
         "after_append": after_append,
-        "after_defrag": active,
+        "after_defrag": after_defrag,
     }
     with open("result.json", "w") as f:
         json.dump(result, f, indent=2)
